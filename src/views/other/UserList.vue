@@ -20,6 +20,11 @@
           <a-col :md="8" :sm="24">
             <span class="table-page-search-submitButtons">
               <a-button type="primary">查询</a-button>
+              <a-button
+                type="primary"
+                style="margin-left: 8px"
+                @click.stop.prevent="handleAdd"
+              >添加</a-button>
               <a-button style="margin-left: 8px">重置</a-button>
             </span>
           </a-col>
@@ -295,6 +300,10 @@ export default {
       this.form.validateFields((err, values) => {
         console.log(err, values)
       })
+    },
+    handleAdd () {
+      const { $router } = this
+      $router.push({ name: 'register' })
     },
     onChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys

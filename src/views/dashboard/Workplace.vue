@@ -7,13 +7,13 @@
         </div>
         <div class="content">
           <div class="content-title">
-            {{ timeFix }}，{{ user.name }}<span class="welcome-text">，{{ welcome }}</span>
+            {{ timeFix }}，{{ user.nickName }}<span class="welcome-text">，{{ welcome }}</span>
           </div>
-          <div>前端工程师 | 蚂蚁金服 - 某某某事业群 - VUE平台</div>
+          <div>AiXinGe(爱信鸽)平台</div>
         </div>
       </div>
     </template>
-    <template v-slot:extraContent>
+    <!-- <template v-slot:extraContent>
       <div class="extra-content">
         <div class="stat-item">
           <a-statistic title="项目数" :value="56" />
@@ -25,12 +25,12 @@
           <a-statistic title="项目访问" :value="2223" />
         </div>
       </div>
-    </template>
+    </template> -->
 
     <div>
       <a-row :gutter="24">
         <a-col :xl="16" :lg="24" :md="24" :sm="24" :xs="24">
-          <a-card
+          <!-- <a-card
             class="project-list"
             :loading="loading"
             style="margin-bottom: 24px;"
@@ -58,7 +58,7 @@
                 </a-card>
               </a-card-grid>
             </div>
-          </a-card>
+          </a-card> -->
 
           <a-card :loading="loading" title="动态" :bordered="false">
             <a-list>
@@ -202,12 +202,12 @@ export default {
   },
   computed: {
     ...mapState({
-      nickname: state => state.user.nickname,
+      nickname: state => state.user.name,
       welcome: state => state.user.welcome
     }),
     currentUser () {
       return {
-        name: 'Serati Ma',
+        name: this.nickname,
         avatar: 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png'
       }
     },

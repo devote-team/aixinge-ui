@@ -32,8 +32,8 @@ const info = options => {
   }
   // role
   const roleObj = {
-    id: 'admin',
-    name: '管理员',
+    id: '1',
+    userName: 'admin',
     describe: '拥有所有权限',
     status: 1,
     creatorId: 'system',
@@ -291,6 +291,37 @@ const info = options => {
         roleId: 'admin',
         permissionId: 'permission',
         permissionName: '权限管理',
+        actions:
+          '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"update","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        actionEntitySet: [
+          {
+            action: 'add',
+            describe: '新增',
+            defaultCheck: false
+          },
+          {
+            action: 'get',
+            describe: '详情',
+            defaultCheck: false
+          },
+          {
+            action: 'update',
+            describe: '修改',
+            defaultCheck: false
+          },
+          {
+            action: 'delete',
+            describe: '删除',
+            defaultCheck: false
+          }
+        ],
+        actionList: null,
+        dataAccess: null
+      },
+      {
+        roleId: 'admin',
+        permissionId: 'management',
+        permissionName: '管理',
         actions:
           '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"update","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
         actionEntitySet: [

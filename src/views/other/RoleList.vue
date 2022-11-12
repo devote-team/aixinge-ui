@@ -20,6 +20,11 @@
           <a-col :md="8" :sm="24">
             <span class="table-page-search-submitButtons">
               <a-button type="primary">查询</a-button>
+              <a-button
+                type="primary"
+                style="margin-left: 8px"
+                @click.stop.prevent="handleAdd"
+              >添加</a-button>
               <a-button style="margin-left: 8px">重置</a-button>
             </span>
           </a-col>
@@ -155,6 +160,10 @@ export default {
     handleOk () {
       // 新增/修改 成功时，重载列表
       this.$refs.table.refresh()
+    },
+    handleAdd () {
+      const { $router } = this
+      $router.push({ name: 'registerResult' })
     },
     onChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys

@@ -66,6 +66,30 @@ request.interceptors.request.use(config => {
 
 // response interceptor
 request.interceptors.response.use((response) => {
+  const data = response.data || {}
+  if (data.code === 1 && data.msg.indexOf('Token is expired') !== -1) {
+    const RT = storage.get(REFRESH_TOKEN)
+
+    if (RT) {
+      store.dispatch('RefreshAT')
+        .then(() => {
+          notification.info({
+            message: 'RefreshToken Success',
+            description: 'Unauthorized Refreshed Please Try Again'
+          })
+      }).catch(err => {
+        notification.error({
+          message: 'Unauthorized',
+          description: ((err.response || {}).data || {}).message || 'Authorization verification failed'
+        })
+        store.dispatch('Logout').then(() => {
+          setTimeout(() => {
+            window.location.reload()
+          }, 1500)
+        })
+      })
+    }
+  }
   return response.data
 }, errorHandler)
 

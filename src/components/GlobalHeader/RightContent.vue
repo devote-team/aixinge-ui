@@ -8,6 +8,7 @@
 <script>
 import AvatarDropdown from './AvatarDropdown'
 import SelectLang from '@/components/SelectLang'
+import { mapState } from 'vuex'
 
 export default {
   name: 'RightContent',
@@ -40,6 +41,9 @@ export default {
     }
   },
   computed: {
+    ...mapState({
+      nickname: state => state.user.name
+    }),
     wrpCls () {
       return {
         'ant-pro-global-header-index-right': true,
@@ -50,7 +54,7 @@ export default {
   mounted () {
     setTimeout(() => {
       this.currentUser = {
-        name: 'Serati Ma'
+        name: this.nickname || '游客'
       }
     }, 1500)
   }
