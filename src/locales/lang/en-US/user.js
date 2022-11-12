@@ -2,9 +2,9 @@ export default {
   'user.login.userName': 'userName',
   'user.login.password': 'password',
   'user.login.username.placeholder': 'Account: admin',
-  'user.login.password.placeholder': 'password: admin or ant.design',
+  'user.login.password.placeholder': 'password: 123456',
   'user.login.message-invalid-credentials':
-    'Invalid username or password（admin/ant.design）',
+    'Invalid username or password（admin/123456）',
   'user.login.message-invalid-verification-code': 'Invalid verification code',
   'user.login.tab-login-credentials': 'Credentials',
   'user.login.tab-login-mobile': 'Mobile number',
@@ -16,6 +16,8 @@ export default {
   'user.login.signup': 'Sign up',
   'user.login.login': 'Login',
   'user.register.register': 'Register',
+  'user.register.nickname.placeholder': 'nickname',
+  'user.register.username.placeholder': 'username',
   'user.register.email.placeholder': 'Email',
   'user.register.password.placeholder': 'Password ',
   'user.register.password.popover-message': 'Please enter at least 6 characters. Please do not use passwords that are easy to guess. ',
@@ -30,6 +32,7 @@ export default {
   'user.email.required': 'Please enter your email!',
   'user.email.wrong-format': 'The email address is in the wrong format!',
   'user.userName.required': 'Please enter account name or email address',
+  'user.nickname.required': 'Please enter nickname',
   'user.password.required': 'Please enter your password!',
   'user.password.twice.msg': 'The passwords entered twice do not match!',
   'user.password.strength.msg':

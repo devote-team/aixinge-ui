@@ -3,7 +3,7 @@ import store from '@/store'
 import storage from 'store'
 import notification from 'ant-design-vue/es/notification'
 import { VueAxios } from './axios'
-import { ACCESS_TOKEN } from '@/store/mutation-types'
+import { ACCESS_TOKEN, REFRESH_TOKEN } from '@/store/mutation-types'
 
 // 创建 axios 实例
 const request = axios.create({
@@ -16,8 +16,6 @@ const request = axios.create({
 const errorHandler = (error) => {
   if (error.response) {
     const data = error.response.data
-    // 从 localstorage 获取 token
-    const token = storage.get(ACCESS_TOKEN)
     if (error.response.status === 403) {
       notification.error({
         message: 'Forbidden',
@@ -25,15 +23,24 @@ const errorHandler = (error) => {
       })
     }
     if (error.response.status === 401 && !(data.result && data.result.isLogin)) {
-      notification.error({
-        message: 'Unauthorized',
-        description: 'Authorization verification failed'
-      })
-      if (token) {
-        store.dispatch('Logout').then(() => {
-          setTimeout(() => {
-            window.location.reload()
-          }, 1500)
+      const RT = storage.get(REFRESH_TOKEN)
+      if (RT) {
+        store.dispatch('RefreshAT')
+          .then(() => {
+            notification.info({
+              message: 'RefreshToken Success',
+              description: 'Unauthorized Refreshed Please Try Again'
+            })
+        }).catch(err => {
+          notification.error({
+            message: 'Unauthorized',
+            description: ((err.response || {}).data || {}).message || 'Authorization verification failed'
+          })
+          store.dispatch('Logout').then(() => {
+            setTimeout(() => {
+              window.location.reload()
+            }, 1500)
+          })
         })
       }
     }
@@ -48,6 +55,11 @@ request.interceptors.request.use(config => {
   // 让每个请求携带自定义 token 请根据实际情况自行修改
   if (token) {
     config.headers[ACCESS_TOKEN] = token
+  }
+  if (config.requestType === 'MOCK_URL') {
+    config.baseURL = process.env.VUE_APP_MOCK_BASE_URL
+  } else {
+    config.baseURL = process.env.VUE_APP_API_BASE_URL
   }
   return config
 }, errorHandler)

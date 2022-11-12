@@ -28,6 +28,7 @@ export function login (parameter) {
   return request({
     url: userApi.Login,
     method: 'post',
+    requestType: 'MOCK_URL',
     data: parameter
   })
 }
@@ -36,6 +37,7 @@ export function getSmsCaptcha (parameter) {
   return request({
     url: userApi.SendSms,
     method: 'post',
+    requestType: 'MOCK_URL',
     data: parameter
   })
 }
@@ -44,6 +46,7 @@ export function getInfo () {
   return request({
     url: userApi.UserInfo,
     method: 'get',
+    requestType: 'MOCK_URL',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8'
     }
@@ -53,6 +56,7 @@ export function getInfo () {
 export function getCurrentUserNav () {
   return request({
     url: userApi.UserMenu,
+    requestType: 'MOCK_URL',
     method: 'get'
   })
 }
@@ -60,6 +64,7 @@ export function getCurrentUserNav () {
 export function logout () {
   return request({
     url: userApi.Logout,
+    requestType: 'MOCK_URL',
     method: 'post',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8'
@@ -74,6 +79,7 @@ export function logout () {
 export function get2step (parameter) {
   return request({
     url: userApi.twoStepCode,
+    requestType: 'MOCK_URL',
     method: 'post',
     data: parameter
   })

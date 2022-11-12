@@ -10,7 +10,7 @@
           <div class="header">
             <a href="/">
               <img src="~@/assets/logo.svg" class="logo" alt="logo">
-              <span class="title">Ant Design</span>
+              <span class="title">AiXinGe爱信鸽</span>
             </a>
           </div>
           <div class="desc">
@@ -27,7 +27,7 @@
             <a href="_self">条款</a>
           </div>
           <div class="copyright">
-            Copyright &copy; 2018 vueComponent
+            Copyright &copy; 2022 AiXinGe
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default {
           }
 
           .title {
-            font-size: 33px;
+            font-size: 23px;
             color: rgba(0, 0, 0, .85);
             font-family: Avenir, 'Helvetica Neue', Arial, Helvetica, sans-serif;
             font-weight: 600;
@@ -130,10 +130,13 @@ export default {
           }
         }
         .desc {
-          font-size: 14px;
+          font-size: 12px;
           color: rgba(0, 0, 0, 0.45);
           margin-top: 12px;
           margin-bottom: 40px;
+          max-width: 30%;
+          margin-right: auto;
+          margin-left: auto;
         }
       }
 

@@ -21,7 +21,7 @@ export default {
 
   'layouts.usermenu.dialog.title': '信息',
   'layouts.usermenu.dialog.content': '您确定要注销吗？',
-  'layouts.userLayout.title': 'Ant Design 是西湖区最具影响力的 Web 设计规范',
+  'layouts.userLayout.title': '智能消息推送平台致力于解决大家在集成消息推送时的各种难题，力求将消息通知简单化、统一化，实现推送"All in One"的效果。',
   ...components,
   ...global,
   ...menu,

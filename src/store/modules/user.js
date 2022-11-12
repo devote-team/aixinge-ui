@@ -1,13 +1,15 @@
 import storage from 'store'
 import expirePlugin from 'store/plugins/expire'
-import { login, getInfo, logout } from '@/api/login'
-import { ACCESS_TOKEN } from '@/store/mutation-types'
+import { getInfo, logout } from '@/api/login'
+import { login, refreshToken } from '@/api/base'
+import { ACCESS_TOKEN, REFRESH_TOKEN } from '@/store/mutation-types'
 import { welcome } from '@/utils/util'
 
 storage.addPlugin(expirePlugin)
 const user = {
   state: {
     token: '',
+    refreshtoken: '',
     name: '',
     welcome: '',
     avatar: '',
@@ -18,6 +20,9 @@ const user = {
   mutations: {
     SET_TOKEN: (state, token) => {
       state.token = token
+    },
+    SET_REFRESH_TOKEN: (state, refreshtoken) => {
+      state.refreshtoken = refreshtoken
     },
     SET_NAME: (state, { name, welcome }) => {
       state.name = name
@@ -39,10 +44,41 @@ const user = {
     Login ({ commit }, userInfo) {
       return new Promise((resolve, reject) => {
         login(userInfo).then(response => {
-          const result = response.result
-          storage.set(ACCESS_TOKEN, result.token, new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
-          commit('SET_TOKEN', result.token)
-          resolve()
+          if (response.code === 0) {
+            const result = response.data
+            storage.set(ACCESS_TOKEN, result.token, new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
+            storage.set(REFRESH_TOKEN, result.refreshToken, new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
+            commit('SET_TOKEN', result.token)
+            commit('SET_REFRESH_TOKEN', result.refreshToken)
+            commit('SET_INFO', result)
+            commit('SET_NAME', { name: result.nickName, welcome: welcome() })
+            commit('SET_AVATAR', result.avatar)
+            resolve()
+          } else {
+            reject(new Error(response.msg || 'Login Failed'))
+          }
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+
+    RefreshAT ({ commit }, RT) {
+      return new Promise((resolve, reject) => {
+        refreshToken({ refreshToken: RT }).then(response => {
+          if (response.code === 0) {
+            const result = response.data
+            storage.set(ACCESS_TOKEN, result.token, new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
+            storage.set(REFRESH_TOKEN, result.refreshToken, new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
+            commit('SET_TOKEN', result.token)
+            commit('SET_REFRESH_TOKEN', result.refreshToken)
+            commit('SET_INFO', result)
+            commit('SET_NAME', { name: result.nickName, welcome: welcome() })
+            commit('SET_AVATAR', result.avatar)
+            resolve()
+          } else {
+            reject(new Error(response.msg || 'Refresh Token Failed'))
+          }
         }).catch(error => {
           reject(error)
         })
@@ -88,8 +124,10 @@ const user = {
       return new Promise((resolve) => {
         logout(state.token).then(() => {
           commit('SET_TOKEN', '')
+          commit('SET_REFRESH_TOKEN', '')
           commit('SET_ROLES', [])
           storage.remove(ACCESS_TOKEN)
+          storage.remove(REFRESH_TOKEN)
           resolve()
         }).catch((err) => {
           console.log('logout fail:', err)

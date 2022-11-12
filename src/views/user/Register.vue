@@ -2,12 +2,29 @@
   <div class="main user-layout-register">
     <h3><span>{{ $t('user.register.register') }}</span></h3>
     <a-form ref="formRegister" :form="form" id="formRegister">
-      <a-form-item>
+      <!-- <a-form-item>
         <a-input
           size="large"
           type="text"
           :placeholder="$t('user.register.email.placeholder')"
           v-decorator="['email', {rules: [{ required: true, type: 'email', message: $t('user.email.required') }], validateTrigger: ['change', 'blur']}]"
+        ></a-input>
+      </a-form-item> -->
+      <a-form-item>
+        <a-input
+          size="large"
+          type="text"
+          :placeholder="$t('user.register.username.placeholder')"
+          v-decorator="['username', {rules: [{ required: true, message: $t('user.userName.required') }], validateTrigger: ['change', 'blur']}]"
+        ></a-input>
+      </a-form-item>
+
+      <a-form-item>
+        <a-input
+          size="large"
+          type="text"
+          :placeholder="$t('user.register.nickname.placeholder')"
+          v-decorator="['nickname', {rules: [{ required: true, message: $t('user.nickname.required') }], validateTrigger: ['change', 'blur']}]"
         ></a-input>
       </a-form-item>
 
@@ -44,14 +61,14 @@
         ></a-input-password>
       </a-form-item>
 
-      <a-form-item>
+      <!-- <a-form-item>
         <a-input size="large" :placeholder="$t('user.login.mobile.placeholder')" v-decorator="['mobile', {rules: [{ required: true, message: $t('user.phone-number.required'), pattern: /^1[3456789]\d{9}$/ }, { validator: this.handlePhoneCheck } ], validateTrigger: ['change', 'blur'] }]">
           <a-select slot="addonBefore" size="large" defaultValue="+86">
             <a-select-option value="+86">+86</a-select-option>
             <a-select-option value="+87">+87</a-select-option>
           </a-select>
         </a-input>
-      </a-form-item>
+      </a-form-item> -->
       <!--<a-input-group size="large" compact>
             <a-select style="width: 20%" size="large" defaultValue="+86">
               <a-select-option value="+86">+86</a-select-option>
@@ -60,7 +77,7 @@
             <a-input style="width: 80%" size="large" placeholder="11 位手机号"></a-input>
           </a-input-group>-->
 
-      <a-row :gutter="16">
+      <!-- <a-row :gutter="16">
         <a-col class="gutter-row" :span="16">
           <a-form-item>
             <a-input size="large" type="text" :placeholder="$t('user.login.mobile.verification-code.placeholder')" v-decorator="['captcha', {rules: [{ required: true, message: '请输入验证码' }], validateTrigger: 'blur'}]">
@@ -76,7 +93,7 @@
             @click.stop.prevent="getCaptcha"
             v-text="!state.smsSendBtn && $t('user.register.get-verification-code')||(state.time+' s')"></a-button>
         </a-col>
-      </a-row>
+      </a-row> -->
 
       <a-form-item>
         <a-button
@@ -96,7 +113,7 @@
 </template>
 
 <script>
-import { getSmsCaptcha } from '@/api/login'
+import { addUser } from '@/api/base'
 import { deviceMixin } from '@/store/device-mixin'
 import { scorePassword } from '@/utils/util'
 
@@ -208,49 +225,61 @@ export default {
       const { form: { validateFields }, state, $router } = this
       validateFields({ force: true }, (err, values) => {
         if (!err) {
-          state.passwordLevelChecked = false
-          $router.push({ name: 'registerResult', params: { ...values } })
+          addUser({
+          username: values.username,
+          nickname: values.nickname,
+          password: values.password
+        }).then(response => {
+          if (response.code === 0) {
+            state.passwordLevelChecked = false
+            $router.push({ name: 'registerResult', params: { ...values } })
+          } else {
+            this.requestFailed(new Error(response.msg))
+          }
+        }).catch(err => {
+          this.requestFailed(err)
+        })
         }
       })
     },
 
-    getCaptcha (e) {
-      e.preventDefault()
-      const { form: { validateFields }, state, $message, $notification } = this
+    // getCaptcha (e) {
+    //   e.preventDefault()
+    //   const { form: { validateFields }, state, $message, $notification } = this
 
-      validateFields(['mobile'], { force: true },
-        (err, values) => {
-          if (!err) {
-            state.smsSendBtn = true
+    //   validateFields(['mobile'], { force: true },
+    //     (err, values) => {
+    //       if (!err) {
+    //         state.smsSendBtn = true
 
-            const interval = window.setInterval(() => {
-              if (state.time-- <= 0) {
-                state.time = 60
-                state.smsSendBtn = false
-                window.clearInterval(interval)
-              }
-            }, 1000)
+    //         const interval = window.setInterval(() => {
+    //           if (state.time-- <= 0) {
+    //             state.time = 60
+    //             state.smsSendBtn = false
+    //             window.clearInterval(interval)
+    //           }
+    //         }, 1000)
 
-            const hide = $message.loading('验证码发送中..', 0)
+    //         const hide = $message.loading('验证码发送中..', 0)
 
-            getSmsCaptcha({ mobile: values.mobile }).then(res => {
-              setTimeout(hide, 2500)
-              $notification['success']({
-                message: '提示',
-                description: '验证码获取成功，您的验证码为：' + res.result.captcha,
-                duration: 8
-              })
-            }).catch(err => {
-              setTimeout(hide, 1)
-              clearInterval(interval)
-              state.time = 60
-              state.smsSendBtn = false
-              this.requestFailed(err)
-            })
-          }
-        }
-      )
-    },
+    //         getSmsCaptcha({ mobile: values.mobile }).then(res => {
+    //           setTimeout(hide, 2500)
+    //           $notification['success']({
+    //             message: '提示',
+    //             description: '验证码获取成功，您的验证码为：' + res.result.captcha,
+    //             duration: 8
+    //           })
+    //         }).catch(err => {
+    //           setTimeout(hide, 1)
+    //           clearInterval(interval)
+    //           state.time = 60
+    //           state.smsSendBtn = false
+    //           this.requestFailed(err)
+    //         })
+    //       }
+    //     }
+    //   )
+    // },
     requestFailed (err) {
       this.$notification['error']({
         message: '错误',

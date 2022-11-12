@@ -22,7 +22,7 @@ export default {
 
   'layouts.usermenu.dialog.title': 'Message',
   'layouts.usermenu.dialog.content': 'Are you sure you would like to logout?',
-  'layouts.userLayout.title': 'Ant Design is the most influential web design specification in Xihu district',
+  'layouts.userLayout.title': 'The intelligent message push platform is committed to solving various problems in integrating message push, striving to simplify and unify message notification, and achieve the effect of pushing "All in One"',
   ...components,
   ...global,
   ...menu,
