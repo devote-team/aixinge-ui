@@ -533,21 +533,10 @@ const userNav = options => {
       parentId: 1,
       id: 7,
       meta: {
-        title: 'menu.dashboard.monitor',
+        title: 'menu.dashboard.workplace',
         show: true
       },
       component: 'Workplace'
-    },
-    {
-      name: 'monitor',
-      path: 'https://www.baidu.com/',
-      parentId: 1,
-      id: 3,
-      meta: {
-        title: 'menu.dashboard.workplace',
-        target: '_blank',
-        show: true
-      }
     },
     {
       name: 'Analysis',
@@ -559,6 +548,17 @@ const userNav = options => {
       },
       component: 'Analysis',
       path: '/dashboard/analysis'
+    },
+    {
+      name: 'monitor',
+      path: 'https://www.baidu.com/',
+      parentId: 1,
+      id: 3,
+      meta: {
+        title: 'menu.dashboard.monitor',
+        target: '_blank',
+        show: true
+      }
     },
 
     // form
@@ -771,6 +771,18 @@ const userNav = options => {
       component: 'RouteView'
     },
     {
+      name: 'TestIconSelect',
+      path: '/exception/icon-selector',
+      parentId: 10024,
+      id: 10033,
+      meta: {
+        title: 'IconSelector',
+        icon: 'tool',
+        show: true
+      },
+      component: 'other/IconSelectorView'
+    },
+    {
       name: '403',
       parentId: 10024,
       id: 10025,
@@ -801,6 +813,49 @@ const userNav = options => {
       component: 'Exception500'
     },
 
+    // 管理
+    {
+      name: 'management',
+      path: '/management',
+      parentId: 0,
+      id: 10086,
+      component: 'RouteView',
+      redirect: '/management/permission/list',
+      meta: {
+        title: 'menu.management', icon: 'align-center', show: true
+      }
+    },
+    {
+      name: 'PermissionList',
+      path: '/management/permission/list',
+      parentId: 10086,
+      id: 10087,
+      component: 'other/PermissionList',
+      meta: {
+        title: '权限列表', icon: 'safety-certificate', show: true
+      }
+    },
+    {
+      name: 'UserList',
+      path: '/management/user/list',
+      parentId: 10086,
+      id: 10088,
+      component: '/other/UserList',
+      meta: {
+        title: '用户列表', icon: 'team', show: true
+      }
+    },
+    {
+      name: 'RoleList',
+      path: '/management/role/list',
+      parentId: 10086,
+      id: 10089,
+      component: '/other/RoleList',
+      meta: {
+        title: '角色列表', icon: 'gateway', show: true
+      }
+    },
+
     // account
     {
       name: 'account',
@@ -824,6 +879,7 @@ const userNav = options => {
       },
       component: 'AccountCenter'
     },
+
     // 特殊三级菜单
     {
       name: 'settings',

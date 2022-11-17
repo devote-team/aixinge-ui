@@ -1,5 +1,6 @@
 // eslint-disable-next-line
 import * as loginService from '@/api/login'
+import * as memuService from '@/api/menu'
 // eslint-disable-next-line
 import { BasicLayout, BlankLayout, PageView, RouteView } from '@/layouts'
 
@@ -86,15 +87,15 @@ const rootRouter = {
  */
 export const generatorDynamicRouter = token => {
   return new Promise((resolve, reject) => {
-    loginService
-      .getCurrentUserNav(token)
+    memuService
+      .getAuthMenu(token)
       .then(res => {
         console.log('generatorDynamicRouter response:', res)
-        const { result } = res
+        const { data } = res
         const menuNav = []
         const childrenNav = []
         //      后端数据, 根级树数组,  根级 PID
-        listToTree(result, childrenNav, 0)
+        listToTree(data, childrenNav, 0)
         rootRouter.children = childrenNav
         menuNav.push(rootRouter)
         console.log('menuNav', menuNav)
@@ -118,7 +119,9 @@ export const generatorDynamicRouter = token => {
  */
 export const generator = (routerMap, parent) => {
   return routerMap.map(item => {
-    const { title, show, hideChildren, hiddenHeaderContent, target, icon } = item.meta || {}
+    const { title, hidden, remark, target, icon } = item.meta || {}
+    const hideChildren = remark && remark.indexOf('hideChildren') !== -1
+    const hiddenHeaderContent = remark && remark.indexOf('hiddenHeaderContent') !== -1
     const currentRouter = {
       // 如果路由设置了 path，则作为默认 path，否则 路由地址 动态拼接生成如 /dashboard/workplace
       path: item.path || `${(parent && parent.path) || ''}/${item.key}`,
@@ -139,7 +142,7 @@ export const generator = (routerMap, parent) => {
       }
     }
     // 是否设置了隐藏菜单
-    if (show === false) {
+    if (hidden) {
       currentRouter.hidden = true
     }
     // 是否设置了隐藏子菜单
@@ -170,7 +173,8 @@ export const generator = (routerMap, parent) => {
 const listToTree = (list, tree, parentId) => {
   list.forEach(item => {
     // 判断是否为父级菜单
-    if (item.parentId === parentId) {
+    // eslint-disable-next-line eqeqeq
+    if (item.parentId == parentId) {
       const child = {
         ...item,
         key: item.key || item.name,
