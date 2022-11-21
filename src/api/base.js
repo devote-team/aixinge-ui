@@ -5,7 +5,7 @@ const userApi = {
   Login: '/v1/login',
   AddUser: '/v1/user/create',
   RefreshToken: '/v1/refresh-token',
-  LogOff: '/v1/user/delete', // 注销
+  delateUser: '/v1/user/delete', // 注销
   ChangePassword: '/v1/user/change-password',
   AssignRole: '/v1/user/assign-role', // 用户分配角色
   GetUserById: '/v1/user/get', // 根据ID获取用户
@@ -44,9 +44,10 @@ export function refreshToken () {
   })
 }
 
-export function logOff () {
+export function delateUser (parameter) {
   return request({
-    url: userApi.LogOff,
+    url: userApi.delateUser,
+    data: parameter,
     method: 'post',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8'
