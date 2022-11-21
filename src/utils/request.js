@@ -73,10 +73,8 @@ request.interceptors.response.use((response) => {
     if (RT) {
       store.dispatch('RefreshAT')
         .then(() => {
-          notification.info({
-            message: 'RefreshToken Success',
-            description: 'Unauthorized Refreshed Please Try Again'
-          })
+          const originalRequest = response.config
+          return request(originalRequest)
       }).catch(err => {
         notification.error({
           message: 'Unauthorized',

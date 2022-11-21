@@ -71,27 +71,23 @@
       <span slot="createTime" slot-scope="text">{{ text | moment }}</span>
       <span slot="action" slot-scope="text, record">
         <a @click="handleEdit(record)">编辑</a>
+
         <a-popconfirm @confirm="handleDelete(record)" style="margin-left: 8px" title="确定删除此账号吗？">
           <!-- <template #icon><question-circle-outlined style="color: red" /></template> -->
           <a href="#">删除</a>
         </a-popconfirm>
-        <!-- <a-divider type="vertical" />
+
+        <a-divider type="vertical" />
         <a-dropdown>
           <a class="ant-dropdown-link">
-            更多 <a-icon type="down" />
+            更多
           </a>
-          <a-menu slot="overlay">
+          <a-menu style="margin-left: 8px" slot="overlay">
             <a-menu-item>
-              <a href="javascript:;">详情</a>
-            </a-menu-item>
-            <a-menu-item>
-              <a href="javascript:;">禁用</a>
-            </a-menu-item>
-            <a-menu-item>
-              <a href="javascript:;">删除</a>
+              <a @click="handleChangePWD(record)">修改密码</a>
             </a-menu-item>
           </a-menu>
-        </a-dropdown> -->
+        </a-dropdown>
       </span>
     </s-table>
 
@@ -172,12 +168,14 @@
 
       </a-form>
     </a-modal>
-    <!-- <a-modal
-      title="操作"
+
+    <!-- 更改密码 -->
+    <a-modal
+      title="更改密码"
       style="top: 20px;"
       :width="800"
-      v-model="visible"
-      @ok="handleOk($event,'edit')"
+      v-model="pwdVisible"
+      @ok="handleOk($event,'pwd')"
     >
       <a-form class="permission-form" :form="form">
 
@@ -234,7 +232,7 @@
         </a-form-item>
 
       </a-form>
-    </a-modal> -->
+    </a-modal>
     <!-- 添加用户 -->
     <a-modal
       title="添加用户"
@@ -332,7 +330,7 @@ import pick from 'lodash.pick'
 import { STable } from '@/components'
 // import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 // import { getRoleList, getServiceList } from '@/api/manage'
-import { getUserPageList, addUser, delateUser, getUserById, updateUserInfo } from '@/api/base'
+import { getUserPageList, addUser, delateUser, getUserById, changePassword, updateUserInfo } from '@/api/base'
 import { PERMISSION_ENUM } from '@/core/permission/permission'
 import { scorePassword } from '@/utils/util'
 
@@ -417,6 +415,7 @@ export default {
 
       visible: false,
       addVisible: false,
+      pwdVisible: false,
 
       state: {
         time: 60,
@@ -516,6 +515,16 @@ export default {
         this.$notification['error']({ message: '错误', description: err, duration: 4 })
       })
     },
+    handleChangePWD (record) {
+      this.pwdVisible = true
+      this.$nextTick(() => {
+        // console.log('permissions', this.permissions)
+        // console.log('checkboxGroup', checkboxGroup)
+
+        this.form.setFieldsValue(pick(record, ['id', 'newPassword', 'oldPassword', 'userName']))
+        // this.form.setFieldsValue(checkboxGroup)
+      })
+    },
     handleEdit (record) {
       this.visible = true
       console.log('record', record)
@@ -584,6 +593,23 @@ export default {
             }).catch(err => {
               this.$notification['error']({ message: '错误', description: err, duration: 4 })
               this.visible = false
+            })
+        } else if (type === 'pwd') {
+          changePassword({
+              'newPassword': values.newPassword,
+              'password': values.oldPassword,
+              'username': values.userName
+            }).then(response => {
+              if (response.code === 0) {
+                this.$notification['success']({ message: '成功', description: '修改成功', duration: 4 })
+                this.$refs.table.refresh()
+              } else {
+                this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
+              }
+              this.pwdVisible = false
+            }).catch(err => {
+              this.$notification['error']({ message: '错误', description: err, duration: 4 })
+              this.pwdVisible = false
             })
         }
         console.log(err, values)

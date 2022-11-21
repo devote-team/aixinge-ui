@@ -34,9 +34,10 @@ export function addUser (parameter) {
   })
 }
 
-export function refreshToken () {
+export function refreshToken (parameter) {
   return request({
     url: userApi.RefreshToken,
+    data: parameter,
     method: 'post',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8'
