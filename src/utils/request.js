@@ -25,12 +25,14 @@ const errorHandler = (error) => {
     if (error.response.status === 401 && !(data.result && data.result.isLogin)) {
       const RT = storage.get(REFRESH_TOKEN)
       if (RT) {
-        store.dispatch('RefreshAT')
+        store.dispatch('RefreshAT', RT)
           .then(() => {
             notification.info({
               message: 'RefreshToken Success',
               description: 'Unauthorized Refreshed Please Try Again'
             })
+            const originalRequest = error.config
+            return request(originalRequest)
         }).catch(err => {
           notification.error({
             message: 'Unauthorized',
@@ -71,11 +73,11 @@ request.interceptors.response.use((response) => {
     const RT = storage.get(REFRESH_TOKEN)
 
     if (RT) {
-      store.dispatch('RefreshAT')
-        .then(() => {
+      return store.dispatch('RefreshAT', RT)
+        .then((res) => {
           const originalRequest = response.config
           return request(originalRequest)
-      }).catch(err => {
+        }).catch(err => {
         notification.error({
           message: 'Unauthorized',
           description: ((err.response || {}).data || {}).message || 'Authorization verification failed'

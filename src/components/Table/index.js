@@ -143,12 +143,12 @@ export default {
      * @param {Object} filters 过滤条件
      * @param {Object} sorter 排序条件
      */
-    loadData (pagination, filters = this.filters, sorter = this.sorter) {
+    loadData (pagination = {}, filters = this.filters, sorter = this.sorter) {
       this.filters = filters
       this.sorter = sorter
 
       this.localLoading = true
-
+      console.log('log by godokyang::::::paginationpaginationpagination:::::::::::::::::', pagination)
       const parameter = pagination && pagination.id ? { id: pagination.id } : Object.assign({
         page: (pagination && pagination.current) ||
           this.showPagination && this.localPagination.current || this.pageNum,
@@ -171,10 +171,10 @@ export default {
       // eslint-disable-next-line
       if ((typeof result === 'object' || typeof result === 'function') && typeof result.then === 'function') {
         result.then(r => {
-          if (r.user) {
+          if (r.user || r.role) {
             r.page = 1
             r.total = 1
-            r.list = [r.user]
+            r.list = [r.user || r.role]
           }
           this.localPagination = this.showPagination && Object.assign({}, this.localPagination, {
             current: r.page, // 返回结果中的当前分页数

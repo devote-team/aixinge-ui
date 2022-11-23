@@ -7,7 +7,7 @@
       >
         <a-row :gutter="48">
           <a-col :md="8" :sm="24">
-            <a-form-item label="角色ID" name="id" :rules="[{ required: true, message: '请输入角色ID' }]">
+            <a-form-item label="用户ID" name="id" :rules="[{ required: true, message: '请输入用户ID' }]">
               <a-input v-model="searchState.id" placeholder="请输入" />
             </a-form-item>
           </a-col>
@@ -359,7 +359,7 @@ const columns = [
   },
   {
     title: '创建时间',
-    dataIndex: 'createTime',
+    dataIndex: 'createdAt',
     scopedSlots: { customRender: 'createTime' },
     sorter: true
   }, {

@@ -1,32 +1,126 @@
 <template>
-  <a-modal
+  <!-- <a-modal
     title="操作"
     :width="800"
     :visible="visible"
     :confirmLoading="confirmLoading"
     @ok="handleOk"
     @cancel="handleCancel"
-  >
-    <a-steps :current="1">
-      <a-step>
-        <!-- <span slot="title">Finished</span> -->
-        <template slot="title">
-          Finished
-        </template>
-        <span slot="description">This is a description.</span>
-      </a-step>
-      <a-step title="In Progress" description="This is a description." />
-      <a-step title="Waiting" description="This is a description." />
-    </a-steps>
-  </a-modal>
+  > -->
+  <div v-if="visible">
+    <!-- 添加角色 -->
+    <a-modal
+      title="添加角色"
+      style="top: 20px;"
+      :width="800"
+      v-model="addVisible"
+      @ok="handleOk($event, 'add')"
+      @cancel="handleCancel"
+    >
+      <a-form class="permission-form" :form="form">
+
+        <a-form-item
+          :labelCol="labelCol"
+          :wrapperCol="wrapperCol"
+          label="角色名称"
+          hasFeedback
+        >
+          <a-input
+            placeholder="起一个名字"
+            v-decorator="['name', {rules: [{ required: true, message: $t('user.nickname.required') }], validateTrigger: ['change', 'blur']}]"
+          />
+        </a-form-item>
+
+        <a-form-item
+          :labelCol="labelCol"
+          :wrapperCol="wrapperCol"
+          label="别名"
+          hasFeedback
+        >
+          <a-input
+            placeholder="别名"
+            v-decorator="['alias', {rules: [{ required: true, message: $t('user.userName.required') }], validateTrigger: ['change', 'blur']}]"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+    <!-- 编辑角色 -->
+    <a-modal
+      title="编辑角色"
+      style="top: 20px;"
+      :width="800"
+      v-model="editVisible"
+      @ok="handleOk($event, 'edit')"
+    >
+      <a-form class="permission-form" :form="form">
+
+        <a-form-item
+          :labelCol="labelCol"
+          :wrapperCol="wrapperCol"
+          label="唯一识别码"
+          hasFeedback
+          validateStatus="success"
+        >
+          <a-input
+            placeholder="唯一识别码"
+            disabled="disabled"
+            v-decorator="['id']"
+          />
+        </a-form-item>
+
+        <a-form-item
+          :labelCol="labelCol"
+          :wrapperCol="wrapperCol"
+          label="角色名称"
+          hasFeedback
+        >
+          <a-input
+            placeholder="起一个名字"
+            v-decorator="['name', {rules: [{ required: true, message: $t('user.nickname.required') }], validateTrigger: ['change', 'blur']}]"
+          />
+        </a-form-item>
+
+        <a-form-item
+          :labelCol="labelCol"
+          :wrapperCol="wrapperCol"
+          label="别名"
+          hasFeedback
+        >
+          <a-input
+            placeholder="别名"
+            v-decorator="['alias', {rules: [{ required: true, message: $t('user.userName.required') }], validateTrigger: ['change', 'blur']}]"
+          />
+        </a-form-item>
+
+        <a-form-item
+          :labelCol="labelCol"
+          :wrapperCol="wrapperCol"
+          label="状态"
+          hasFeedback
+        >
+          <a-select v-decorator="['status', { initialValue: 1 }]">
+            <a-select-option :value="1">正常</a-select-option>
+            <a-select-option :value="2">禁用</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-modal>
+  </div>
+  <!-- </a-modal> -->
 </template>
 
 <script>
 import { getPermissions } from '@/api/manage'
 import pick from 'lodash.pick'
+import { createRole, updateRole } from '@/api/role'
 
 export default {
   name: 'RoleModal',
+  computed: {
+    visible () {
+      return this.addVisible || this.editVisible
+    }
+  },
   data () {
     return {
       labelCol: {
@@ -37,7 +131,9 @@ export default {
         xs: { span: 24 },
         sm: { span: 16 }
       },
-      visible: false,
+      addVisible: false,
+      editVisible: false,
+
       confirmLoading: false,
       mdl: {},
 
@@ -49,57 +145,67 @@ export default {
     this.loadPermissions()
   },
   methods: {
-    add () {
-      this.edit({ id: 0 })
+    add (record) {
+      this.addVisible = true
+      this.$nextTick(() => {
+        this.form.setFieldsValue(pick(record, 'name', 'alias'))
+      })
     },
     edit (record) {
-      this.mdl = Object.assign({}, record)
-      this.visible = true
-
-      // 有权限表，处理勾选
-      if (this.mdl.permissions && this.permissions) {
-        // 先处理要勾选的权限结构
-        const permissionsAction = {}
-        this.mdl.permissions.forEach(permission => {
-          permissionsAction[permission.permissionId] = permission.actionEntitySet.map(entity => entity.action)
-        })
-        // 把权限表遍历一遍，设定要勾选的权限 action
-        this.permissions.forEach(permission => {
-          permission.selected = permissionsAction[permission.id] || []
-        })
-      }
-
+      this.editVisible = true
       this.$nextTick(() => {
-        this.form.setFieldsValue(pick(this.mdl, 'id', 'name', 'status', 'describe'))
+        this.form.setFieldsValue(pick(record, 'id', 'name', 'status', 'alias'))
       })
-      console.log('this.mdl', this.mdl)
     },
     close () {
       this.$emit('close')
-      this.visible = false
+      this.addVisible = false
+      this.editVisible = false
     },
-    handleOk () {
+    handleOk (e, type) {
       const _this = this
       // 触发表单验证
+      e.preventDefault()
+      // 新增/修改 成功时，重载列表
       this.form.validateFields((err, values) => {
-        // 验证表单没错误
-        if (!err) {
-          console.log('form values', values)
-
-          _this.confirmLoading = true
-          // 模拟后端请求 2000 毫秒延迟
-          new Promise((resolve) => {
-            setTimeout(() => resolve(), 2000)
-          }).then(() => {
-            // Do something
-            _this.$message.success('保存成功')
-            _this.$emit('ok')
-          }).catch(() => {
-            // Do something
-          }).finally(() => {
-            _this.confirmLoading = false
-            _this.close()
-          })
+        if (err) return
+        _this.confirmLoading = true
+        if (type === 'add') {
+          createRole({
+            alias: values.alias,
+            name: values.name
+            }).then(response => {
+              if (response.code === 0) {
+                this.$notification['success']({ message: '成功', description: '添加成功', duration: 4 })
+                _this.$emit('ok')
+              } else {
+                this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
+              }
+            }).catch(err => {
+              this.$notification['error']({ message: '错误', description: err, duration: 4 })
+            }).finally(() => {
+              _this.confirmLoading = false
+              _this.close()
+            })
+        } else if (type === 'edit') {
+          updateRole({
+              id: values.id,
+              alias: values.alias,
+              name: values.name,
+              status: values.status
+            }).then(response => {
+              if (response.code === 0) {
+                this.$notification['success']({ message: '成功', description: '修改成功', duration: 4 })
+                _this.$emit('ok')
+              } else {
+                this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
+              }
+            }).catch(err => {
+              this.$notification['error']({ message: '错误', description: err, duration: 4 })
+            }).finally(() => {
+              _this.confirmLoading = false
+              _this.close()
+            })
         }
       })
     },
