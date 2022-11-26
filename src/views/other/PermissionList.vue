@@ -27,7 +27,7 @@
       </a-form>
     </div>
 
-    <s-table :columns="columns" :data="loadData">
+    <s-table :columns="columns" :data="loadData" :single-data="loadSingleData">
 
       <span slot="actions" slot-scope="text, record">
         <a-tag v-for="(action, index) in record.actionList" :key="index">{{ action.describe }}</a-tag>
@@ -191,11 +191,24 @@ export default {
       // 向后端拉取可以用的操作列表
       permissionList: null,
       // 加载数据方法 必须为 Promise 对象
+      loadSingleData: (parameter) => {
+        return this.$http.get('/permission', {
+          params: Object.assign(parameter, this.queryParam)
+        }).then(res => {
+          const result = res.result
+          result.data.map(permission => {
+            permission.actionList = JSON.parse(permission.actionData)
+            return permission
+          })
+          return result
+        })
+      },
       loadData: parameter => {
         return this.$http.get('/permission', {
           params: Object.assign(parameter, this.queryParam)
         }).then(res => {
           const result = res.result
+          result.total = result.totalPage
           result.data.map(permission => {
             permission.actionList = JSON.parse(permission.actionData)
             return permission

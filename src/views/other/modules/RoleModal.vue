@@ -42,6 +42,22 @@
             v-decorator="['alias', {rules: [{ required: true, message: $t('user.userName.required') }], validateTrigger: ['change', 'blur']}]"
           />
         </a-form-item>
+
+        <a-divider>拥有权限</a-divider>
+        <template v-for="menu in menustree">
+          <a-form-item
+            v-if="menu.status"
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            :key="menu.id"
+            :label="$t(menu.meta.title)"
+          >
+            <a-checkbox>全选</a-checkbox>
+            <a-checkbox-group v-decorator="[`menu.${menu.id}`]" :options="menu.children" >
+              <span :slot="label">{{ label }}</span>
+            </a-checkbox-group>
+          </a-form-item>
+        </template>
       </a-form>
     </a-modal>
     <!-- 编辑角色 -->
@@ -103,6 +119,22 @@
             <a-select-option :value="2">禁用</a-select-option>
           </a-select>
         </a-form-item>
+
+        <a-divider>拥有权限</a-divider>
+        <template v-for="menu in menustree">
+          <a-form-item
+            v-if="menu.status"
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            :key="menu.id"
+            :label="$t(menu.meta.title)"
+          >
+            <a-checkbox>全选</a-checkbox>
+            <a-checkbox-group v-decorator="[`menu.${menu.id}`]" :options="menu.children" >
+              <span :slot="label">{{ label }}</span>
+            </a-checkbox-group>
+          </a-form-item>
+        </template>
       </a-form>
     </a-modal>
   </div>
@@ -113,10 +145,14 @@
 import { getPermissions } from '@/api/manage'
 import pick from 'lodash.pick'
 import { createRole, updateRole } from '@/api/role'
+import { mapState } from 'vuex'
 
 export default {
   name: 'RoleModal',
   computed: {
+    ...mapState({
+      menustree: state => state.user.menustree
+    }),
     visible () {
       return this.addVisible || this.editVisible
     }
@@ -143,6 +179,9 @@ export default {
   },
   created () {
     this.loadPermissions()
+    if (!this.menustree.length) {
+      this.$store.dispatch('GetMenuListTree')
+    }
   },
   methods: {
     add (record) {

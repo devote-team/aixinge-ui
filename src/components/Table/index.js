@@ -115,15 +115,16 @@ export default {
     }
   },
   created () {
-    const { pageNo } = this.$route.params
+    const { pageNo, id } = this.$route.params
     const localPageNum = this.pageURI && (pageNo && parseInt(pageNo)) || this.pageNum
     this.localPagination = ['auto', true].includes(this.showPagination) && Object.assign({}, this.localPagination, {
       current: localPageNum,
       pageSize: this.pageSize,
-      showSizeChanger: this.showSizeChanger
+      showSizeChanger: this.showSizeChanger,
+      id
     }) || false
     this.needTotalList = this.initTotalList(this.columns)
-    this.loadData()
+    this.loadData(id ? { id } : null)
   },
   methods: {
     /**
@@ -148,7 +149,6 @@ export default {
       this.sorter = sorter
 
       this.localLoading = true
-      console.log('log by godokyang::::::paginationpaginationpagination:::::::::::::::::', pagination)
       const parameter = pagination && pagination.id ? { id: pagination.id } : Object.assign({
         page: (pagination && pagination.current) ||
           this.showPagination && this.localPagination.current || this.pageNum,
@@ -166,7 +166,6 @@ export default {
       )
 
       const result = pagination && pagination.id ? this.singleData(parameter) : this.data(parameter)
-
       // 对接自己的通用数据接口需要修改下方代码中的 r.page, r.total, r.list
       // eslint-disable-next-line
       if ((typeof result === 'object' || typeof result === 'function') && typeof result.then === 'function') {
@@ -176,6 +175,7 @@ export default {
             r.total = 1
             r.list = [r.user || r.role]
           }
+
           this.localPagination = this.showPagination && Object.assign({}, this.localPagination, {
             current: r.page, // 返回结果中的当前分页数
             total: r.total, // 返回结果中的总记录数

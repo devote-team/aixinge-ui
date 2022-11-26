@@ -32,7 +32,6 @@
                 style="margin-left: 8px"
                 @click="$refs.modal.add()"
               >添加</a-button>
-              <!-- <a-button style="margin-left: 8px">重置</a-button> -->
             </span>
           </a-col>
         </a-row>
@@ -40,36 +39,33 @@
     </div>
 
     <s-table
-      ref="table"
+      row-key="id"
       size="default"
+      ref="table"
       :columns="columns"
       :data="loadData"
+      :loading="loading"
       :single-data="loadSingleData"
-    >
-      <!-- <div
+      :expandedRowKeys="expandedRowKeys"
+      @expand="handleExpand">
+      <div
         slot="expandedRowRender"
-        slot-scope="record"
+        slot-scope="expandedRecord"
         style="margin: 0">
-        <a-row
-          :gutter="24"
-          :style="{ marginBottom: '12px' }">
-          <a-col :span="12" v-for="(role, index) in record.permissions" :key="index" :style="{ marginBottom: '12px' }">
-            <a-col :span="4">
-              <span>{{ role.permissionName }}：</span>
-            </a-col>
-            <a-col :span="20" v-if="role.actionEntitySet.length > 0">
-              <a-tag color="cyan" v-for="(action, k) in role.actionEntitySet" :key="k">{{ action.describe }}</a-tag>
-            </a-col>
-            <a-col :span="20" v-else>-</a-col>
-          </a-col>
-        </a-row>
-      </div> -->
+        <a-button
+          :key="index"
+          color="cyan"
+          v-for="(menu, index) in expandedRecord.menus"
+          :style="{ marginBottom: '12px', height: '23px', marginRight: '5px' }"
+        >
+          {{ $t(menu.meta.title) }}
+        </a-button>
+      </div>
       <a-tag color="blue" slot="status" slot-scope="text">{{ text | statusFilter }}</a-tag>
       <span slot="createTime" slot-scope="text">{{ text | moment }}</span>
       <span slot="action" slot-scope="text, record">
         <a @click="$refs.modal.edit(record)">编辑</a>
         <a-popconfirm @confirm="handleDelete(record)" style="margin-left: 8px" title="确定删除此角色吗？">
-          <!-- <template #icon><question-circle-outlined style="color: red" /></template> -->
           <a href="#">删除</a>
         </a-popconfirm>
       </span>
@@ -83,7 +79,7 @@
 <script>
 import { STable } from '@/components'
 import RoleModal from './modules/RoleModal'
-import { getRolePageList, getRoleById, deleteRole } from '@/api/role'
+import { getRolePageList, getRoleById, deleteRole, getSelectedMenuDetailById } from '@/api/role'
 
 const STATUS = {
   1: '启用',
@@ -101,7 +97,7 @@ export default {
       description: '列表使用场景：后台管理中的权限管理以及角色管理，可用于基于 RBAC 设计的角色权限控制，颗粒度细到每一个操作类型。',
 
       searchState: { id: null },
-      visible: false,
+      loading: false,
 
       form: null,
       mdl: {},
@@ -152,13 +148,9 @@ export default {
           .then(res => {
           return res.data
         })
-        // return this.$http.get('/role', {
-        //   params: Object.assign(parameter, this.queryParam)
-        // }).then(res => {
-        //   return res.result
-        // })
       },
 
+      expandedRowKeys: [],
       selectedRowKeys: [],
       selectedRows: []
     }
@@ -194,23 +186,34 @@ export default {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
     },
+    handleExpand (expanded, record) {
+      console.log('expanded', expanded, record)
+      if (!record.menus) {
+        this.loading = true
+        getSelectedMenuDetailById({ id: record.id }).then(res => {
+          if (res.code === 0) {
+            record.menus = res.data || []
+            this.expand(expanded, record)
+          } else {
+            this.$notification['error']({ message: '错误', description: '获取菜单失败', duration: 4 })
+          }
+        }).finally(() => {
+            this.loading = false
+        })
+      } else {
+        this.expand(expanded, record)
+      }
+    },
+    expand (expanded, record) {
+      if (expanded) {
+        this.expandedRowKeys.push(record.id)
+      } else {
+        this.expandedRowKeys = this.expandedRowKeys.filter(item => record.id !== item)
+      }
+    },
     toggleAdvanced () {
       this.advanced = !this.advanced
     }
-  },
-  watch: {
-    /*
-      'selectedRows': function (selectedRows) {
-        this.needTotalList = this.needTotalList.map(item => {
-          return {
-            ...item,
-            total: selectedRows.reduce( (sum, val) => {
-              return sum + val[item.dataIndex]
-            }, 0)
-          }
-        })
-      }
-      */
   }
 }
 </script>

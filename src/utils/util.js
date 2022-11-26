@@ -1,3 +1,5 @@
+import { i18nRender } from '@/locales'
+
 export function timeFix () {
   const time = new Date()
   const hour = time.getHours()
@@ -8,6 +10,15 @@ export function welcome () {
   const arr = ['休息一会儿吧', '准备吃什么呢?', '要不要打一把 DOTA', '我猜你可能累了']
   const index = Math.floor(Math.random() * arr.length)
   return arr[index]
+}
+
+export function deepAddCheckBoxAttrForArr (menuList) {
+  return menuList.map((item) => {
+    if (item.children) {
+      item.children = deepAddCheckBoxAttrForArr(item.children)
+    }
+    return Object.assign({}, item, { label: i18nRender(item.meta.title || item.name), value: item.id })
+   })
 }
 
 /**

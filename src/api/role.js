@@ -7,9 +7,11 @@ const roleApi = {
     CreateRole: '/v1/role/create', // 创建角色
     DeleteRole: '/v1/role/delete', // 删除角色
     GetRoleById: '/v1/role/get', // 根据id获取角色
+    GetRoleByIds: '/v1/role/batch-get', // 根据id获取角色
     GetRoleList: '/v1/role/list', // 获取角色列表
     GetRolePageList: '/v1/role/page', // 分页获取角色列表
     GetSelectedMenuById: '/v1/role/selected-menus', // 根据ID获取角色已分配菜单
+    GetSelectedMenuDetailById: '/v1/role/selected-menus-detail', // 根据ID获取角色已分配菜单详细列表
     GetSelectedUserById: '/v1/role/selected-users', // 根据ID获取角色已分配的用户ID
     UpdateRole: '/v1/role/update' // 更新角色
 }
@@ -54,6 +56,14 @@ export function getRoleById (parameter) {
   })
 }
 
+export function getRoleByIds (parameter) {
+  return request({
+    url: roleApi.GetRoleByIds,
+    method: 'post',
+    data: parameter
+  })
+}
+
 export function getRoleList (parameter) {
   return request({
     url: roleApi.GetRoleList,
@@ -73,6 +83,14 @@ export function getRolePageList (parameter) {
 export function getSelectedMenuById (parameter) {
   return request({
     url: roleApi.GetSelectedMenuById,
+    method: 'post',
+    data: parameter
+  })
+}
+
+export function getSelectedMenuDetailById (parameter) {
+  return request({
+    url: roleApi.GetSelectedMenuDetailById,
     method: 'post',
     data: parameter
   })

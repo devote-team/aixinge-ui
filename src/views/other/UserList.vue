@@ -32,7 +32,6 @@
                 style="margin-left: 8px"
                 @click.stop.prevent="handleAdd(record)"
               >添加</a-button>
-              <!-- <a-button style="margin-left: 8px">重置</a-button> -->
             </span>
           </a-col>
         </a-row>
@@ -45,28 +44,24 @@
       ref="table"
       :columns="columns"
       :data="loadData"
+      :loading="loading"
       :single-data="loadSingleData"
       :expandedRowKeys="expandedRowKeys"
-      @expand="handleExpand"
-    >
-      <!-- <div
+      @expand="handleExpand">
+      <div
         slot="expandedRowRender"
         slot-scope="record"
         style="margin: 0">
-        <a-row
-          :gutter="24"
-          :style="{ marginBottom: '12px' }">
-          <a-col :span="12" v-for="(role, index) in record.permissions" :key="index" :style="{ marginBottom: '12px', height: '23px' }">
-            <a-col :lg="4" :md="24">
-              <span>{{ role.permissionName }}：</span>
-            </a-col>
-            <a-col :lg="20" :md="24" v-if="role.actionList && role.actionList.length > 0">
-              <a-tag color="cyan" v-for="action in role.actionList" :key="action">{{ action | permissionFilter }}</a-tag>
-            </a-col>
-            <a-col :span="20" v-else>-</a-col>
-          </a-col>
-        </a-row>
-      </div> -->
+        <a-button
+          :key="index"
+          color="cyan"
+          v-for="(role, index) in record.roles"
+          :style="{ marginBottom: '12px', height: '23px' }"
+          @click="handleRoleSelected(role)"
+        >
+          {{ role.name }}
+        </a-button>
+      </div>
       <a-tag color="blue" slot="status" slot-scope="text">{{ text | statusFilter }}</a-tag>
       <span slot="createTime" slot-scope="text">{{ text | moment }}</span>
       <span slot="action" slot-scope="text, record">
@@ -330,7 +325,9 @@ import pick from 'lodash.pick'
 import { STable } from '@/components'
 // import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 // import { getRoleList, getServiceList } from '@/api/manage'
-import { getUserPageList, addUser, delateUser, getUserById, changePassword, updateUserInfo } from '@/api/base'
+import { getUserPageList, addUser, delateUser, getUserById, changePassword, updateUserInfo, getUserRoleListById } from '@/api/base'
+// import { getRolePageList, getRoleById, deleteRole } from '@/api/role'
+import { getRoleByIds } from '@/api/role'
 import { PERMISSION_ENUM } from '@/core/permission/permission'
 import { scorePassword } from '@/utils/util'
 
@@ -417,6 +414,8 @@ export default {
       addVisible: false,
       pwdVisible: false,
 
+      loading: false,
+
       state: {
         time: 60,
         level: 0,
@@ -482,22 +481,10 @@ export default {
       return permission && permission.label
     }
   },
-  created () {
-    // getServiceList().then(res => {
-    //   console.log('getServiceList.call()', res)
-    // })
-    // getUserPageList({
-    //   'page': 1,
-    //   'pageSize': 10
-    // }).then(res => {
-    //   console.log('getUserPageList.call()', res)
-    // })
-
-    // getRoleList().then(res => {
-    //   console.log('getRoleList.call()', res)
-    // })
-  },
   methods: {
+    handleRoleSelected (role) {
+      this.$router.push({ name: 'RoleList', params: { ...role } })
+    },
     handleSearch (searchState) {
       this.$refs.table.loadData({ id: searchState.id })
     },
@@ -518,41 +505,15 @@ export default {
     handleChangePWD (record) {
       this.pwdVisible = true
       this.$nextTick(() => {
-        // console.log('permissions', this.permissions)
-        // console.log('checkboxGroup', checkboxGroup)
-
         this.form.setFieldsValue(pick(record, ['id', 'newPassword', 'oldPassword', 'userName']))
-        // this.form.setFieldsValue(checkboxGroup)
       })
     },
     handleEdit (record) {
       this.visible = true
       console.log('record', record)
 
-      // const checkboxGroup = {}
-      // this.permissions = record.permissions.map(permission => {
-      //   const groupKey = `permissions.${permission.permissionId}`
-      //   checkboxGroup[groupKey] = permission.actionList
-      //   const actionsOptions = permission.actionEntitySet.map(action => {
-      //     return {
-      //       label: action.describe,
-      //       value: action.action,
-      //       defaultCheck: action.defaultCheck
-      //     }
-      //   })
-      //   return {
-      //     ...permission,
-      //     actionsOptions
-      //   }
-      // })
-
       this.$nextTick(() => {
-        // console.log('permissions', this.permissions)
-        // console.log('checkboxGroup', checkboxGroup)
-
-        // this.form.setFieldsValue(pick(record, ['id', 'status', 'describe', 'userName']))
         this.form.setFieldsValue(pick(record, ['id', 'status', 'avatar', 'userName', 'nickName']))
-        // this.form.setFieldsValue(checkboxGroup)
       })
     },
     handleOk (e, type) {
@@ -618,28 +579,8 @@ export default {
     handleAdd (record) {
       this.addVisible = true
       console.log('record', record)
-
-      // const checkboxGroup = {}
-      // this.permissions = record.permissions.map(permission => {
-      //   const groupKey = `permissions.${permission.permissionId}`
-      //   checkboxGroup[groupKey] = permission.actionList
-      //   const actionsOptions = permission.actionEntitySet.map(action => {
-      //     return {
-      //       label: action.describe,
-      //       value: action.action,
-      //       defaultCheck: action.defaultCheck
-      //     }
-      //   })
-      //   return {
-      //     ...permission,
-      //     actionsOptions
-      //   }
-      // })
       this.$nextTick(() => {
-        // console.log('permissions', this.permissions)
-        // console.log('checkboxGroup', checkboxGroup)
         this.form.setFieldsValue(pick(record, ['id', 'status', 'password', 'userName', 'nickName']))
-        // this.form.setFieldsValue(checkboxGroup)
       })
     },
     handlePasswordLevel (rule, value, callback) {
@@ -692,6 +633,29 @@ export default {
     },
     handleExpand (expanded, record) {
       console.log('expanded', expanded, record)
+      if (!record.roles) {
+        this.loading = true
+        getUserRoleListById({ id: record.id }).then(res => {
+          if (res.code === 0) {
+            return getRoleByIds({ ids: res.data })
+          } else {
+            this.$notification['error']({ message: '错误', description: '获取角色失败', duration: 4 })
+          }
+        }).then(res => {
+          if (res.code === 0) {
+            record.roles = res.data
+            this.expand(expanded, record)
+          } else {
+            this.$notification['error']({ message: '错误', description: '获取角色失败', duration: 4 })
+          }
+        }).finally(() => {
+            this.loading = false
+        })
+      } else {
+        this.expand(expanded, record)
+      }
+    },
+    expand (expanded, record) {
       if (expanded) {
         this.expandedRowKeys.push(record.id)
       } else {
@@ -703,18 +667,6 @@ export default {
     }
   },
   watch: {
-    /*
-      'selectedRows': function (selectedRows) {
-        this.needTotalList = this.needTotalList.map(item => {
-          return {
-            ...item,
-            total: selectedRows.reduce( (sum, val) => {
-              return sum + val[item.dataIndex]
-            }, 0)
-          }
-        })
-      }
-      */
   }
 }
 </script>

@@ -2,9 +2,9 @@ import storage from 'store'
 import expirePlugin from 'store/plugins/expire'
 import { getInfo, logout } from '@/api/login'
 import { login, refreshToken } from '@/api/base'
-import { getAuthMenu } from '@/api/menu'
+import { getAuthMenu, getMenuListTree } from '@/api/menu'
 import { ACCESS_TOKEN, REFRESH_TOKEN } from '@/store/mutation-types'
-import { welcome } from '@/utils/util'
+import { welcome, deepAddCheckBoxAttrForArr } from '@/utils/util'
 
 storage.addPlugin(expirePlugin)
 const user = {
@@ -15,7 +15,8 @@ const user = {
     welcome: '',
     avatar: '',
     roles: [],
-    info: {}
+    info: {},
+    menustree: [] // 所有可用的菜单
   },
 
   mutations: {
@@ -37,6 +38,9 @@ const user = {
     },
     SET_INFO: (state, info) => {
       state.info = info
+    },
+    SET_MENUSTREE: (state, menustree) => {
+      state.menustree = menustree
     }
   },
 
@@ -150,7 +154,25 @@ const user = {
         })
       })
     },
-
+    // 获取可用menu
+    GetMenuListTree ({ commit }) {
+      return new Promise((resolve, reject) => {
+        // 请求后端获取menutree
+        getMenuListTree().then(response => {
+          const { data, code } = response
+          if (code === 0) {
+            const menulist = deepAddCheckBoxAttrForArr(data)
+            commit('SET_MENUSTREE', menulist)
+            // 下游
+            resolve(menulist)
+          } else {
+            reject(new Error('GetMenuListTree: api got error'))
+          }
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
     // 登出
     Logout ({ commit, state }) {
       return new Promise((resolve) => {
