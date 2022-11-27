@@ -4,7 +4,7 @@ import { getInfo, logout } from '@/api/login'
 import { login, refreshToken } from '@/api/base'
 import { getAuthMenu, getMenuListTree } from '@/api/menu'
 import { ACCESS_TOKEN, REFRESH_TOKEN } from '@/store/mutation-types'
-import { welcome, deepAddCheckBoxAttrForArr } from '@/utils/util'
+import { welcome } from '@/utils/util'
 
 storage.addPlugin(expirePlugin)
 const user = {
@@ -161,7 +161,7 @@ const user = {
         getMenuListTree().then(response => {
           const { data, code } = response
           if (code === 0) {
-            const menulist = deepAddCheckBoxAttrForArr(data)
+            const menulist = data
             commit('SET_MENUSTREE', menulist)
             // 下游
             resolve(menulist)

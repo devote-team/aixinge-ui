@@ -1,30 +1,11 @@
 <template>
   <a-card :bordered="false">
     <div class="table-page-search-wrapper">
-      <a-form layout="inline">
-        <a-row :gutter="48">
-          <a-col :md="8" :sm="24">
-            <a-form-item label="角色ID">
-              <a-input placeholder="请输入"/>
-            </a-form-item>
-          </a-col>
-          <a-col :md="8" :sm="24">
-            <a-form-item label="状态">
-              <a-select placeholder="请选择" default-value="0">
-                <a-select-option value="0">全部</a-select-option>
-                <a-select-option value="1">关闭</a-select-option>
-                <a-select-option value="2">运行中</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :md="8" :sm="24">
-            <span class="table-page-search-submitButtons">
-              <a-button type="primary">查询</a-button>
-              <a-button style="margin-left: 8px">重置</a-button>
-            </span>
-          </a-col>
-        </a-row>
-      </a-form>
+      <a-button
+        type="primary"
+        html-type="submit"
+        @click.stop.prevent="handleSearch(searchState)"
+      >添加</a-button>
     </div>
 
     <s-table :columns="columns" :data="loadData" :single-data="loadSingleData">
@@ -123,7 +104,7 @@
             v-model="mdl.actions"
             :allowClear="true"
           >
-            <a-select-option v-for="(action, index) in permissionList" :key="index" :value="action.value">{{ action.label }}</a-select-option>
+            <a-select-option v-for="(action, index) in localMenustree" :key="index" :value="action.value">{{ action.label }}</a-select-option>
           </a-select>
         </a-form-item>
 
@@ -135,11 +116,17 @@
 
 <script>
 import { STable } from '@/components'
+import { mapState } from 'vuex'
 
 export default {
   name: 'TableList',
   components: {
     STable
+  },
+  computed: {
+    ...mapState({
+      menustree: state => state.user.menustree
+    })
   },
   data () {
     return {
@@ -169,13 +156,13 @@ export default {
         },
         {
           title: '权限名称',
-          dataIndex: 'name'
+          dataIndex: 'label'
         },
-        {
-          title: '可操作权限',
-          dataIndex: 'actions',
-          scopedSlots: { customRender: 'actions' }
-        },
+        // {
+        //   title: '可操作权限',
+        //   dataIndex: 'actions',
+        //   scopedSlots: { customRender: 'actions' }
+        // },
         {
           title: '状态',
           dataIndex: 'status',
@@ -189,32 +176,35 @@ export default {
         }
       ],
       // 向后端拉取可以用的操作列表
-      permissionList: null,
+      localMenustree: null,
       // 加载数据方法 必须为 Promise 对象
       loadSingleData: (parameter) => {
-        return this.$http.get('/permission', {
-          params: Object.assign(parameter, this.queryParam)
-        }).then(res => {
-          const result = res.result
-          result.data.map(permission => {
-            permission.actionList = JSON.parse(permission.actionData)
-            return permission
-          })
-          return result
-        })
+        return new Promise((resolve, reject) => {
+          if (this.localMenustree) {
+            resolve(this.localMenustree)
+          } else {
+            this.$store.dispatch('GetMenuListTree').then((res) => {
+              this.loadMenus()
+              resolve(this.localMenustree)
+            }).catch(err => {
+              reject(err)
+            })
+          }
+         })
       },
       loadData: parameter => {
-        return this.$http.get('/permission', {
-          params: Object.assign(parameter, this.queryParam)
-        }).then(res => {
-          const result = res.result
-          result.total = result.totalPage
-          result.data.map(permission => {
-            permission.actionList = JSON.parse(permission.actionData)
-            return permission
-          })
-          return result
-        })
+        return new Promise((resolve, reject) => {
+          if (this.localMenustree) {
+            resolve(this.localMenustree)
+          } else {
+            this.$store.dispatch('GetMenuListTree').then((res) => {
+              this.loadMenus()
+              resolve(this.localMenustree)
+            }).catch(err => {
+              reject(err)
+            })
+          }
+         })
       },
 
       selectedRowKeys: [],
@@ -231,25 +221,30 @@ export default {
     }
   },
   created () {
-    this.loadPermissionList()
+    if (!this.menustree.length) {
+      this.$store.dispatch('GetMenuListTree')
+        .then(res => {
+          this.loadMenus()
+      })
+    } else {
+      this.loadMenus()
+    }
   },
   methods: {
-    loadPermissionList () {
-      // permissionList
-      new Promise(resolve => {
-        const data = [
-          { label: '新增', value: 'add', defaultChecked: false },
-          { label: '查询', value: 'get', defaultChecked: false },
-          { label: '修改', value: 'update', defaultChecked: false },
-          { label: '列表', value: 'query', defaultChecked: false },
-          { label: '删除', value: 'delete', defaultChecked: false },
-          { label: '导入', value: 'import', defaultChecked: false },
-          { label: '导出', value: 'export', defaultChecked: false }
-        ]
-        setTimeout(resolve(data), 1500)
-      }).then(res => {
-        this.permissionList = res
-      })
+    loadMenus () {
+      // localMenustree
+      const that = this
+      that.localMenustree = that.menustree.map(menu => {
+        menu = Object.assign(menu, { label: this.$t(menu.meta.title || menu.name), value: menu.id })
+        const options = menu.children ? menu.children.concat() : []
+        menu.checkedAll = false
+        menu.selected = []
+        menu.indeterminate = false
+        menu.children = options.map(option => {
+          return Object.assign(option, { label: this.$t(option.meta.title || option.name), value: option.id, defaultChecked: false })
+        })
+        return menu
+      }).sort((a, b) => a.id - b.id)
     },
     handleEdit (record) {
       this.mdl = Object.assign({}, record)

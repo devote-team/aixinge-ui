@@ -64,7 +64,7 @@
       <a-tag color="blue" slot="status" slot-scope="text">{{ text | statusFilter }}</a-tag>
       <span slot="createTime" slot-scope="text">{{ text | moment }}</span>
       <span slot="action" slot-scope="text, record">
-        <a @click="$refs.modal.edit(record)">编辑</a>
+        <a @click="hanldeEdit(record)">编辑</a>
         <a-popconfirm @confirm="handleDelete(record)" style="margin-left: 8px" title="确定删除此角色吗？">
           <a href="#">删除</a>
         </a-popconfirm>
@@ -165,6 +165,15 @@ export default {
       // 新增/修改 成功时，重载列表
       this.$refs.table.refresh()
     },
+    hanldeEdit (record) {
+      if (!record.menus) {
+        this.getMenuDetail(record, () => {
+          this.$refs.modal.edit(record)
+        })
+      } else {
+        this.$refs.modal.edit(record)
+      }
+    },
     handleDelete (record) {
       deleteRole({
         ids: [ record.id ]
@@ -189,16 +198,8 @@ export default {
     handleExpand (expanded, record) {
       console.log('expanded', expanded, record)
       if (!record.menus) {
-        this.loading = true
-        getSelectedMenuDetailById({ id: record.id }).then(res => {
-          if (res.code === 0) {
-            record.menus = res.data || []
-            this.expand(expanded, record)
-          } else {
-            this.$notification['error']({ message: '错误', description: '获取菜单失败', duration: 4 })
-          }
-        }).finally(() => {
-            this.loading = false
+        this.getMenuDetail(record, () => {
+          this.expand(expanded, record)
         })
       } else {
         this.expand(expanded, record)
@@ -210,6 +211,19 @@ export default {
       } else {
         this.expandedRowKeys = this.expandedRowKeys.filter(item => record.id !== item)
       }
+    },
+    getMenuDetail (record, cb) {
+      this.loading = true
+      getSelectedMenuDetailById({ id: record.id }).then(res => {
+        if (res.code === 0) {
+          record.menus = res.data || []
+          cb()
+        } else {
+          this.$notification['error']({ message: '错误', description: '获取菜单失败', duration: 4 })
+        }
+      }).finally(() => {
+          this.loading = false
+      })
     },
     toggleAdvanced () {
       this.advanced = !this.advanced

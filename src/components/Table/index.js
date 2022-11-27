@@ -170,6 +170,11 @@ export default {
       // eslint-disable-next-line
       if ((typeof result === 'object' || typeof result === 'function') && typeof result.then === 'function') {
         result.then(r => {
+          // promissionList
+          if (r.length) {
+            r = { page: 1, total: 1, list: r }
+          }
+          // userList or roleList
           if (r.user || r.role) {
             r.page = 1
             r.total = 1

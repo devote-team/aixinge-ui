@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/valid-v-model -->
 <template>
   <!-- <a-modal
     title="操作"
@@ -44,17 +45,24 @@
         </a-form-item>
 
         <a-divider>拥有权限</a-divider>
-        <template v-for="menu in menustree">
+        <template v-for="menu in localMenustree">
           <a-form-item
             v-if="menu.status"
             :labelCol="labelCol"
             :wrapperCol="wrapperCol"
             :key="menu.id"
-            :label="$t(menu.meta.title)"
+            :label="menu.label"
           >
-            <a-checkbox>全选</a-checkbox>
-            <a-checkbox-group v-decorator="[`menu.${menu.id}`]" :options="menu.children" >
-              <span :slot="label">{{ label }}</span>
+            <a-checkbox
+              v-decorator="[`menu-${menu.id}`, { initialValue: menu.checkedAll, valuePropName: 'checked' }]"
+              :indeterminate="menu.indeterminate"
+              @change="onChangeCheckAll($event, menu)"
+            >全选</a-checkbox>
+            <a-checkbox-group
+              @change="onChangeCheck($event, menu)"
+              v-decorator="[`menu-${menu.id}`, { initialValue: menu.selected, valuePropName: 'value' }]"
+              :options="menu.children" >
+              <!-- <span :slot="label">{{ label }}</span> -->
             </a-checkbox-group>
           </a-form-item>
         </template>
@@ -121,17 +129,24 @@
         </a-form-item>
 
         <a-divider>拥有权限</a-divider>
-        <template v-for="menu in menustree">
+        <template v-for="menu in localMenustree">
           <a-form-item
             v-if="menu.status"
             :labelCol="labelCol"
             :wrapperCol="wrapperCol"
             :key="menu.id"
-            :label="$t(menu.meta.title)"
+            :label="menu.label"
           >
-            <a-checkbox>全选</a-checkbox>
-            <a-checkbox-group v-decorator="[`menu.${menu.id}`]" :options="menu.children" >
-              <span :slot="label">{{ label }}</span>
+            <a-checkbox
+              v-decorator="[`menuroot-${menu.id}`, { initialValue: menu.checkedAll, valuePropName: 'checked' }]"
+              :indeterminate="menu.indeterminate"
+              @change="onChangeCheckAll($event, menu)"
+            >全选</a-checkbox>
+            <a-checkbox-group
+              @change="onChangeCheck($event, menu)"
+              v-decorator="[`menuitem-${menu.id}`, { initialValue: menu.selected, valuePropName: 'value' }]"
+              :options="menu.children" >
+              <!-- <span :slot="label">{{ label }}</span> -->
             </a-checkbox-group>
           </a-form-item>
         </template>
@@ -142,7 +157,6 @@
 </template>
 
 <script>
-import { getPermissions } from '@/api/manage'
 import pick from 'lodash.pick'
 import { createRole, updateRole } from '@/api/role'
 import { mapState } from 'vuex'
@@ -174,27 +188,65 @@ export default {
       mdl: {},
 
       form: this.$form.createForm(this),
-      permissions: []
+      localMenustree: []
     }
   },
   created () {
-    this.loadPermissions()
     if (!this.menustree.length) {
       this.$store.dispatch('GetMenuListTree')
+        .then(res => {
+          this.loadMenus()
+      })
+    } else {
+      this.loadMenus()
     }
   },
   methods: {
     add (record) {
       this.addVisible = true
+      this.resetData()
       this.$nextTick(() => {
         this.form.setFieldsValue(pick(record, 'name', 'alias'))
       })
     },
     edit (record) {
       this.editVisible = true
+      this.resetData()
+      this.handleSelected(record)
       this.$nextTick(() => {
         this.form.setFieldsValue(pick(record, 'id', 'name', 'status', 'alias'))
       })
+    },
+    handleSelected (record) {
+      if (record && record.menus.length) {
+        // 先处理要勾选的权限结构
+        const menuActions = []
+        record.menus.forEach(menu => {
+          menuActions.push(menu.id)
+        })
+        // 把权限表遍历一遍，设定要勾选的权限 action
+        this.createSelected(this.localMenustree, menuActions)
+      }
+    },
+    createSelected (source, actions, selected) {
+      source.forEach(item => {
+        if (!item.selected) item.selected = []
+        if (actions.includes(item.id)) selected ? selected.push(item.id) : item.selected.push(item.id)
+        if (item.children) this.createSelected(item.children, actions, item.selected)
+        if (!selected) {
+          if (item.selected.length && item.children.length && item.selected.length >= item.children.length) {
+            item.checkedAll = true
+            item.indeterminate = false
+          }
+          if (item.selected.length && item.children.length && item.selected.length < item.children.length) {
+            item.checkedAll = false
+            item.indeterminate = true
+          }
+        }
+      })
+    },
+    resetData () {
+      this.loadMenus()
     },
     close () {
       this.$emit('close')
@@ -251,35 +303,31 @@ export default {
     handleCancel () {
       this.close()
     },
-    onChangeCheck (permission) {
-      permission.indeterminate = !!permission.selected.length && (permission.selected.length < permission.actionsOptions.length)
-      permission.checkedAll = permission.selected.length === permission.actionsOptions.length
+    onChangeCheck (e, menu) {
+      menu.selected = e
+      menu.indeterminate = !!menu.selected.length && (menu.selected.length < menu.children.length)
+      menu.checkedAll = menu.selected.length === menu.children.length
     },
-    onChangeCheckAll (e, permission) {
-      Object.assign(permission, {
-        selected: e.target.checked ? permission.actionsOptions.map(obj => obj.value) : [],
+    onChangeCheckAll (e, menu) {
+      Object.assign(menu, {
+        selected: e.target.checked ? menu.children.map(obj => obj.value) : [],
         indeterminate: false,
         checkedAll: e.target.checked
       })
     },
-    loadPermissions () {
+    loadMenus () {
       const that = this
-      getPermissions().then(res => {
-        const result = res.result
-        that.permissions = result.map(permission => {
-          const options = JSON.parse(permission.actionData) || []
-          permission.checkedAll = false
-          permission.selected = []
-          permission.indeterminate = false
-          permission.actionsOptions = options.map(option => {
-            return {
-              label: option.describe,
-              value: option.action
-            }
-          })
-          return permission
+      that.localMenustree = that.menustree.map(menu => {
+        menu = Object.assign(menu, { label: this.$t(menu.meta.title || menu.name), value: menu.id })
+        const options = menu.children ? menu.children.concat() : []
+        menu.checkedAll = false
+        menu.selected = []
+        menu.indeterminate = false
+        menu.children = options.map(option => {
+          return Object.assign(option, { label: this.$t(option.meta.title || option.name), value: option.id })
         })
-      })
+        return menu
+      }).sort((a, b) => a.id - b.id)
     }
 
   }
