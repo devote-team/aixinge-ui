@@ -3,9 +3,9 @@ import request from '@/utils/request'
 const userApi = {
   // login
   Login: '/v1/login',
-  AddUser: '/v1/user/create',
   RefreshToken: '/v1/refresh-token',
-  delateUser: '/v1/user/delete', // 注销
+  AddUser: '/v1/user/create',
+  DeleteUser: '/v1/user/delete', // 删除用户
   ChangePassword: '/v1/user/change-password',
   AssignRole: '/v1/user/assign-role', // 用户分配角色
   GetUserById: '/v1/user/get', // 根据ID获取用户
@@ -45,9 +45,9 @@ export function refreshToken (parameter) {
   })
 }
 
-export function delateUser (parameter) {
+export function deleteUser (parameter) {
   return request({
-    url: userApi.delateUser,
+    url: userApi.DeleteUser,
     data: parameter,
     method: 'post',
     headers: {
@@ -93,6 +93,7 @@ export function AssignRole (parameter) {
     data: parameter
   })
 }
+
 export function getUserById (parameter) {
   return request({
     url: userApi.GetUserById,
@@ -100,6 +101,7 @@ export function getUserById (parameter) {
     data: parameter
   })
 }
+
 export function getUserList (parameter) {
   return request({
     url: userApi.GetUserList,
@@ -115,6 +117,7 @@ export function getUserPageList (parameter) {
     data: parameter
   })
 }
+
 export function getUserRoleListById (parameter) {
   return request({
     url: userApi.GetUserRoleListById,

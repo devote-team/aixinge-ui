@@ -1,117 +1,122 @@
 <template>
-  <a-card :bordered="false">
-    <div class="table-page-search-wrapper">
-      <a-button
-        type="primary"
-        html-type="submit"
-        @click.stop.prevent="handleSearch(searchState)"
-      >添加</a-button>
-    </div>
+  <page-header-wrapper>
+    <a-card :bordered="false">
+      <div class="table-operator">
+        <a-button
+          type="primary"
+          html-type="submit"
+          @click.stop.prevent="handleSearch(searchState)">
+          添加
+        </a-button>
+      </div>
 
-    <s-table :columns="columns" :data="loadData" :single-data="loadSingleData">
+      <s-table :columns="columns" :data="loadData" :single-data="loadSingleData">
 
-      <span slot="actions" slot-scope="text, record">
-        <a-tag v-for="(action, index) in record.actionList" :key="index">{{ action.describe }}</a-tag>
-      </span>
+        <span slot="actions" slot-scope="text, record">
+          <a-tag v-for="(action, index) in record.actionList" :key="index">{{ action.describe }}</a-tag>
+        </span>
 
-      <span slot="status" slot-scope="text">
-        {{ text | statusFilter }}
-      </span>
+        <span slot="status" slot-scope="text">
+          {{ text | statusFilter }}
+        </span>
 
-      <span slot="action" slot-scope="text, record">
-        <a @click="handleEdit(record)">编辑</a>
-        <a-divider type="vertical" />
-        <a-dropdown>
-          <a class="ant-dropdown-link">
-            更多 <a-icon type="down" />
-          </a>
-          <a-menu slot="overlay">
-            <a-menu-item>
-              <a href="javascript:;">详情</a>
-            </a-menu-item>
-            <a-menu-item>
-              <a href="javascript:;">禁用</a>
-            </a-menu-item>
-            <a-menu-item>
-              <a href="javascript:;">删除</a>
-            </a-menu-item>
-          </a-menu>
-        </a-dropdown>
-      </span>
-    </s-table>
+        <span slot="action" slot-scope="text, record">
+          <a @click="handleEdit(record)">编辑</a>
+          <a-divider type="vertical" />
+          <a-dropdown>
+            <a class="ant-dropdown-link">
+              更多 <a-icon type="down" />
+            </a>
+            <a-menu slot="overlay">
+              <a-menu-item>
+                <a href="javascript:;">详情</a>
+              </a-menu-item>
+              <a-menu-item>
+                <a href="javascript:;">禁用</a>
+              </a-menu-item>
+              <a-menu-item>
+                <a href="javascript:;">删除</a>
+              </a-menu-item>
+            </a-menu>
+          </a-dropdown>
+        </span>
+      </s-table>
 
-    <a-modal
-      title="操作"
-      :width="800"
-      v-model="visible"
-      @ok="handleOk"
-    >
-      <a-form :autoFormCreate="(form)=>{this.form = form}">
+      <a-modal
+        title="操作"
+        :width="800"
+        v-model="visible"
+        @ok="handleOk"
+      >
+        <a-form :autoFormCreate="(form)=>{this.form = form}">
 
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="唯一识别码"
-          hasFeedback
-          validateStatus="success"
-        >
-          <a-input placeholder="唯一识别码" v-model="mdl.id" id="no" disabled="disabled" />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="权限名称"
-          hasFeedback
-          validateStatus="success"
-        >
-          <a-input placeholder="起一个名字" v-model="mdl.name" id="permission_name" />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="状态"
-          hasFeedback
-          validateStatus="warning"
-        >
-          <a-select v-model="mdl.status">
-            <a-select-option value="1">正常</a-select-option>
-            <a-select-option value="2">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="描述"
-          hasFeedback
-        >
-          <a-textarea :rows="5" v-model="mdl.describe" placeholder="..." id="describe"/>
-        </a-form-item>
-
-        <a-divider />
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="赋予权限"
-          hasFeedback
-        >
-          <a-select
-            style="width: 100%"
-            mode="multiple"
-            v-model="mdl.actions"
-            :allowClear="true"
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="ID"
+            hasFeedback
+            validateStatus="success"
           >
-            <a-select-option v-for="(action, index) in localMenustree" :key="index" :value="action.value">{{ action.label }}</a-select-option>
-          </a-select>
-        </a-form-item>
+            <a-input placeholder="ID" v-model="mdl.id" id="no" disabled="disabled" />
+          </a-form-item>
 
-      </a-form>
-    </a-modal>
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="权限名称"
+            hasFeedback
+            validateStatus="success"
+          >
+            <a-input placeholder="起一个名字" v-model="mdl.name" id="permission_name" />
+          </a-form-item>
 
-  </a-card>
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="状态"
+            hasFeedback
+            validateStatus="warning"
+          >
+            <a-select v-model="mdl.status">
+              <a-select-option value="1">正常</a-select-option>
+              <a-select-option value="2">禁用</a-select-option>
+            </a-select>
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="描述"
+            hasFeedback
+          >
+            <a-textarea :rows="5" v-model="mdl.describe" placeholder="..." id="describe" />
+          </a-form-item>
+
+          <a-divider />
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="赋予权限"
+            hasFeedback
+          >
+            <a-select
+              style="width: 100%"
+              mode="multiple"
+              v-model="mdl.actions"
+              :allowClear="true"
+            >
+              <a-select-option v-for="(action, index) in localMenustree" :key="index" :value="action.value">
+                {{ action.label }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+
+        </a-form>
+      </a-modal>
+
+    </a-card>
+  </page-header-wrapper>
 </template>
 
 <script>
@@ -190,7 +195,7 @@ export default {
               reject(err)
             })
           }
-         })
+        })
       },
       loadData: parameter => {
         return new Promise((resolve, reject) => {
@@ -204,7 +209,7 @@ export default {
               reject(err)
             })
           }
-         })
+        })
       },
 
       selectedRowKeys: [],
@@ -225,14 +230,14 @@ export default {
       this.$store.dispatch('GetMenuListTree')
         .then(res => {
           this.loadMenus()
-      })
+        })
     } else {
       this.loadMenus()
     }
   },
   methods: {
     loadMenus () {
-      // localMenustree
+      // localMenusTree
       const that = this
       that.localMenustree = that.menustree.map(menu => {
         menu = Object.assign(menu, { label: this.$t(menu.meta.title || menu.name), value: menu.id })
@@ -241,7 +246,11 @@ export default {
         menu.selected = []
         menu.indeterminate = false
         menu.children = options.map(option => {
-          return Object.assign(option, { label: this.$t(option.meta.title || option.name), value: option.id, defaultChecked: false })
+          return Object.assign(option, {
+            label: this.$t(option.meta.title || option.name),
+            value: option.id,
+            defaultChecked: false
+          })
         })
         return menu
       }).sort((a, b) => a.id - b.id)

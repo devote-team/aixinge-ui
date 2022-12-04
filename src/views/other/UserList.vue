@@ -1,352 +1,334 @@
 <template>
-  <a-card :bordered="false">
-    <div class="table-page-search-wrapper">
-      <a-form
-        layout="inline"
-        :model="searchState"
-      >
-        <a-row :gutter="48">
-          <a-col :md="8" :sm="24">
-            <a-form-item label="用户ID" name="id" :rules="[{ required: true, message: '请输入用户ID' }]">
-              <a-input v-model="searchState.id" placeholder="请输入" />
-            </a-form-item>
-          </a-col>
-          <!-- <a-col :md="8" :sm="24">
-            <a-form-item label="状态">
-              <a-select placeholder="请选择" default-value="0">
-                <a-select-option value="0">全部</a-select-option>
-                <a-select-option value="1">关闭</a-select-option>
-                <a-select-option value="2">运行中</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col> -->
-          <a-col :md="8" :sm="24">
-            <span class="table-page-search-submitButtons">
-              <a-button
-                type="primary"
-                html-type="submit"
-                @click.stop.prevent="handleSearch(searchState)"
-              >查询</a-button>
-              <a-button
-                type="primary"
-                style="margin-left: 8px"
-                @click.stop.prevent="handleAdd(record)"
-              >添加</a-button>
-            </span>
-          </a-col>
-        </a-row>
-      </a-form>
-    </div>
-
-    <s-table
-      row-key="id"
-      size="default"
-      ref="table"
-      :columns="columns"
-      :data="loadData"
-      :loading="loading"
-      :single-data="loadSingleData"
-      :expandedRowKeys="expandedRowKeys"
-      @expand="handleExpand">
-      <div
-        slot="expandedRowRender"
-        slot-scope="record"
-        style="margin: 0">
-        <a-button
-          :key="index"
-          color="cyan"
-          v-for="(role, index) in record.roles"
-          :style="{ marginBottom: '12px', height: '23px' }"
-          @click="handleRoleSelected(role)"
-        >
-          {{ role.name }}
-        </a-button>
+  <page-header-wrapper>
+    <a-card :bordered="false">
+      <div class="table-page-search-wrapper">
+        <a-form
+          layout="inline">
+          <a-row :gutter="48">
+            <a-col :md="8" :sm="24">
+              <a-form-item label="用户名" name="id" :rules="[{ required: true, message: '请输入用户名' }]">
+                <a-input v-model="queryParam.username" placeholder="请输入" />
+              </a-form-item>
+            </a-col>
+            <a-col :md="8" :sm="24">
+              <a-form-item label="状态">
+                <a-select placeholder="请选择" default-value="0">
+                  <a-select-option value="0">全部</a-select-option>
+                  <a-select-option value="1">启用</a-select-option>
+                  <a-select-option value="2">禁用</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :md="8" :sm="24">
+              <span class="table-page-search-submitButtons">
+                <a-button
+                  type="primary"
+                  html-type="submit"
+                  @click.stop.prevent="handleSearch(searchState)"
+                >查询</a-button>
+                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
+              </span>
+            </a-col>
+          </a-row>
+        </a-form>
       </div>
-      <a-tag color="blue" slot="status" slot-scope="text">{{ text | statusFilter }}</a-tag>
-      <span slot="createTime" slot-scope="text">{{ text | moment }}</span>
-      <span slot="action" slot-scope="text, record">
-        <a @click="handleEdit(record)">编辑</a>
 
-        <a-popconfirm @confirm="handleDelete(record)" style="margin-left: 8px" title="确定删除此账号吗？">
-          <!-- <template #icon><question-circle-outlined style="color: red" /></template> -->
-          <a href="#">删除</a>
-        </a-popconfirm>
+      <div class="table-operator">
+        <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button>
+      </div>
 
-        <a-divider type="vertical" />
-        <a-dropdown>
-          <a class="ant-dropdown-link">
-            更多
-          </a>
-          <a-menu style="margin-left: 8px" slot="overlay">
-            <a-menu-item>
-              <a @click="handleChangePWD(record)">修改密码</a>
-            </a-menu-item>
-          </a-menu>
-        </a-dropdown>
-      </span>
-    </s-table>
+      <s-table
+        size="default"
+        ref="table"
+        row-key="id"
+        :columns="columns"
+        :data="loadData"
+        :single-data="loadSingleData"
+        :loading="loading"
+        :alert="alert"
+        :row-selection="rowSelection"
+        :show-pagination="true"
+      >
 
-    <!-- 编辑用户 -->
-    <a-modal
-      title="操作"
-      style="top: 20px;"
-      :width="800"
-      v-model="visible"
-      @ok="handleOk($event,'edit')"
-    >
-      <a-form class="permission-form" :form="form">
+        <span slot="serial" slot-scope="text, record, index">{{ index + 1 }}</span>
+        <span slot="status" slot-scope="text">
+          <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
+        </span>
+        <span slot="createTime" slot-scope="text">{{ text | moment }}</span>
+        <span slot="description" slot-scope="text">
+          <ellipsis :length="4" tooltip>{{ text }}</ellipsis>
+        </span>
 
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="唯一识别码"
-          hasFeedback
-          validateStatus="success"
-        >
-          <a-input
-            placeholder="唯一识别码"
-            disabled="disabled"
-            v-decorator="['id']"
-          />
-        </a-form-item>
+        <span slot="action" slot-scope="text, record">
+          <template>
+            <a @click="handleEdit(record)">编辑</a>
+            <a-divider type="vertical" />
+            <a @click="handleChangePassword(record)">修改密码</a>
+            <a-divider type="vertical" />
+            <a @click="handleChangeRole(record)">角色配置</a>
+            <a-divider type="vertical" />
+            <a @click="handleChangeStatus(record)">{{ record.status === 1 ? '禁用' : '启用' }}</a>
+            <a-divider type="vertical" />
+            <a @click="handleDelete(record)">删除</a>
+          </template>
+        </span>
+      </s-table>
 
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="头像"
-          hasFeedback
-          validateStatus="success"
-        >
-          <a-input
-            placeholder="头像"
-            v-decorator="['avatar']"
-          />
-        </a-form-item>
+      <!-- 添加用户 -->
+      <a-modal
+        title="添加用户"
+        style="top: 20px;"
+        :width="800"
+        v-model="addVisible"
+        @ok="handleOk($event, 'add')"
+      >
+        <a-form class="permission-form" :form="form">
 
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="用户名"
-          hasFeedback
-          validateStatus="success"
-        >
-          <a-input
-            placeholder="用户名"
-            v-decorator="['userName']"
-          />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="昵称"
-          hasFeedback
-          validateStatus="success"
-        >
-          <a-input
-            placeholder="昵称"
-            v-decorator="['nickName']"
-          />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="状态"
-          hasFeedback
-        >
-          <a-select v-decorator="['status', { initialValue: 1 }]">
-            <a-select-option :value="1">正常</a-select-option>
-            <a-select-option :value="2">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-
-      </a-form>
-    </a-modal>
-
-    <!-- 更改密码 -->
-    <a-modal
-      title="更改密码"
-      style="top: 20px;"
-      :width="800"
-      v-model="pwdVisible"
-      @ok="handleOk($event,'pwd')"
-    >
-      <a-form class="permission-form" :form="form">
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="唯一识别码"
-          hasFeedback
-          validateStatus="success"
-        >
-          <a-input
-            placeholder="唯一识别码"
-            disabled="disabled"
-            v-decorator="['id']"
-          />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="用户名"
-          hasFeedback
-          validateStatus="success"
-        >
-          <a-input
-            placeholder="用户名"
-            disabled="disabled"
-            v-decorator="['userName']"
-          />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="原密码"
-          hasFeedback
-        >
-          <a-input-password
-            :placeholder="$t('user.password.required')"
-            v-decorator="['oldPassword', {rules: [{ required: true, message: $t('user.password.required') }, { validator: this.handlePasswordLevel }], validateTrigger: ['change', 'blur']}]"
-          />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="新密码"
-          hasFeedback
-        >
-          <a-input-password
-            :placeholder="$t('user.register.password.placeholder')"
-            v-decorator="['newPassword', {rules: [{ required: true, message: $t('user.password.required') }, { validator: this.handlePasswordLevel }], validateTrigger: ['change', 'blur']}]"
-          />
-        </a-form-item>
-
-      </a-form>
-    </a-modal>
-    <!-- 添加用户 -->
-    <a-modal
-      title="添加用户"
-      style="top: 20px;"
-      :width="800"
-      v-model="addVisible"
-      @ok="handleOk($event, 'add')"
-    >
-      <a-form class="permission-form" :form="form">
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="角色名称"
-          hasFeedback
-        >
-          <a-input
-            placeholder="起一个名字"
-            v-decorator="['nickName', {rules: [{ required: true, message: $t('user.nickname.required') }], validateTrigger: ['change', 'blur']}]"
-          />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="用户名"
-          hasFeedback
-        >
-          <a-input
-            placeholder="用户名"
-            v-decorator="['userName', {rules: [{ required: true, message: $t('user.userName.required') }], validateTrigger: ['change', 'blur']}]"
-          />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="密码"
-          hasFeedback
-        >
-          <a-input-password
-            :placeholder="$t('user.register.password.placeholder')"
-            v-decorator="['password', {rules: [{ required: true, message: $t('user.password.required') }, { validator: this.handlePasswordLevel }], validateTrigger: ['change', 'blur']}]"
-          />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="确认密码"
-          hasFeedback
-        >
-          <a-input-password
-            @click="handlePasswordInputClick"
-            :placeholder="$t('user.register.confirm-password.placeholder')"
-            v-decorator="['password2', {rules: [{ required: true, message: $t('user.password.required') }, { validator: this.handlePasswordCheck }], validateTrigger: ['change', 'blur']}]"
-          />
-        </a-form-item>
-
-        <a-form-item
-          :labelCol="labelCol"
-          :wrapperCol="wrapperCol"
-          label="状态"
-          hasFeedback
-        >
-          <a-select v-decorator="['status', { initialValue: 1 }]">
-            <a-select-option :value="1">正常</a-select-option>
-            <a-select-option :value="2">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <!-- <a-divider>拥有权限</a-divider>
-        <template v-for="permission in permissions">
           <a-form-item
-            class="permission-group"
-            v-if="permission.actionsOptions && permission.actionsOptions.length > 0"
             :labelCol="labelCol"
             :wrapperCol="wrapperCol"
-            :key="permission.permissionId"
-            :label="permission.permissionName"
+            label="角色名称"
+            hasFeedback
           >
-            <a-checkbox>全选</a-checkbox>
-            <a-checkbox-group v-decorator="[`permissions.${permission.permissionId}`]" :options="permission.actionsOptions"/>
+            <a-input
+              placeholder="起一个名字"
+              v-decorator="['nickName', {rules: [{ required: true, message: $t('user.nickname.required') }], validateTrigger: ['change', 'blur']}]"
+            />
           </a-form-item>
-        </template> -->
 
-      </a-form>
-    </a-modal>
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="用户名"
+            hasFeedback
+          >
+            <a-input
+              placeholder="用户名"
+              v-decorator="['userName', {rules: [{ required: true, message: $t('user.userName.required') }], validateTrigger: ['change', 'blur']}]"
+            />
+          </a-form-item>
 
-  </a-card>
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="密码"
+            hasFeedback
+          >
+            <a-input-password
+              :placeholder="$t('user.register.password.placeholder')"
+              v-decorator="['password', {rules: [{ required: true, message: $t('user.password.required') }, { validator: this.handlePasswordLevel }], validateTrigger: ['change', 'blur']}]"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="确认密码"
+            hasFeedback
+          >
+            <a-input-password
+              @click="handlePasswordInputClick"
+              :placeholder="$t('user.register.confirm-password.placeholder')"
+              v-decorator="['password2', {rules: [{ required: true, message: $t('user.password.required') }, { validator: this.handlePasswordCheck }], validateTrigger: ['change', 'blur']}]"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="状态"
+            hasFeedback
+          >
+            <a-select v-decorator="['status', { initialValue: 1 }]">
+              <a-select-option :value="1">正常</a-select-option>
+              <a-select-option :value="2">禁用</a-select-option>
+            </a-select>
+          </a-form-item>
+
+        </a-form>
+      </a-modal>
+      <!-- 编辑用户 -->
+      <a-modal
+        title="操作"
+        style="top: 20px;"
+        :width="800"
+        v-model="visible"
+        @ok="handleOk($event,'edit')"
+      >
+        <a-form class="permission-form" :form="form">
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="唯一识别码"
+            hasFeedback
+            validateStatus="success"
+          >
+            <a-input
+              placeholder="唯一识别码"
+              disabled="disabled"
+              v-decorator="['id']"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="头像"
+            hasFeedback
+            validateStatus="success"
+          >
+            <a-input
+              placeholder="头像"
+              v-decorator="['avatar']"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="用户名"
+            hasFeedback
+            validateStatus="success"
+          >
+            <a-input
+              placeholder="用户名"
+              v-decorator="['userName']"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="昵称"
+            hasFeedback
+            validateStatus="success"
+          >
+            <a-input
+              placeholder="昵称"
+              v-decorator="['nickName']"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="状态"
+            hasFeedback
+          >
+            <a-select v-decorator="['status', { initialValue: 1 }]">
+              <a-select-option :value="1">正常</a-select-option>
+              <a-select-option :value="2">禁用</a-select-option>
+            </a-select>
+          </a-form-item>
+
+        </a-form>
+      </a-modal>
+      <!-- 更改密码 -->
+      <a-modal
+        title="更改密码"
+        style="top: 20px;"
+        :width="800"
+        v-model="pwdVisible"
+        @ok="handleOk($event,'pwd')"
+      >
+        <a-form class="permission-form" :form="form">
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="ID"
+            hasFeedback
+            validateStatus="success"
+            hidden="hidden"
+          >
+            <a-input
+              placeholder="ID"
+              disabled="disabled"
+              v-decorator="['id']"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="用户名"
+            hasFeedback
+            validateStatus="success"
+          >
+            <a-input
+              placeholder="用户名"
+              disabled="disabled"
+              v-decorator="['userName']"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="原密码"
+            hasFeedback
+          >
+            <a-input-password
+              :placeholder="$t('user.password.required')"
+              v-decorator="['oldPassword', {rules: [{ required: true, message: $t('user.password.required') }, { validator: this.handlePasswordLevel }], validateTrigger: ['change', 'blur']}]"
+            />
+          </a-form-item>
+
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="新密码"
+            hasFeedback
+          >
+            <a-input-password
+              :placeholder="$t('user.register.password.placeholder')"
+              v-decorator="['newPassword', {rules: [{ required: true, message: $t('user.password.required') }, { validator: this.handlePasswordLevel }], validateTrigger: ['change', 'blur']}]"
+            />
+          </a-form-item>
+
+        </a-form>
+      </a-modal>
+
+    </a-card>
+  </page-header-wrapper>
 </template>
 
 <script>
 import pick from 'lodash.pick'
 import { STable } from '@/components'
-// import { QuestionCircleOutlined } from '@ant-design/icons-vue'
-// import { getRoleList, getServiceList } from '@/api/manage'
-import { getUserPageList, addUser, delateUser, getUserById, changePassword, updateUserInfo, getUserRoleListById } from '@/api/base'
+import {
+  getUserPageList,
+  addUser,
+  deleteUser,
+  getUserById,
+  changePassword,
+  updateUserInfo
+  // getUserRoleListById
+} from '@/api/base'
 // import { getRolePageList, getRoleById, deleteRole } from '@/api/role'
-import { getRoleByIds } from '@/api/role'
 import { PERMISSION_ENUM } from '@/core/permission/permission'
 import { scorePassword } from '@/utils/util'
+import { Modal } from 'ant-design-vue'
 
-const STATUS = {
-  1: '启用',
-  2: '禁用'
+const statusMap = {
+  1: {
+    status: 'success',
+    text: '启用'
+  },
+  2: {
+    status: 'error',
+    text: '禁用'
+  }
 }
 
 const columns = [
-  {
-    title: '唯一识别码',
-    dataIndex: 'id'
-  },
   {
     title: '用户名',
     dataIndex: 'userName'
   },
   {
-    title: '角色名称',
+    title: '昵称',
     dataIndex: 'nickName'
   },
   {
@@ -361,7 +343,7 @@ const columns = [
     sorter: true
   }, {
     title: '操作',
-    width: '150px',
+    width: '350px',
     dataIndex: 'action',
     scopedSlots: { customRender: 'action' }
   }
@@ -401,13 +383,16 @@ export default {
     },
     passwordLevelColor () {
       return levelColor[this.state.passwordLevel]
+    },
+    rowSelection () {
+      return {
+        selectedRowKeys: this.selectedRowKeys,
+        onChange: this.onSelectChange
+      }
     }
   },
   data () {
     return {
-      searchState: {
-        id: null
-      },
       description: '列表使用场景：后台管理中的权限管理以及角色管理，可用于基于 RBAC 设计的角色权限控制，颗粒度细到每一个操作类型。',
 
       visible: false,
@@ -415,6 +400,11 @@ export default {
       pwdVisible: false,
 
       loading: false,
+
+      alert: {
+        show: true,
+        clear: true
+      },
 
       state: {
         time: 60,
@@ -443,28 +433,20 @@ export default {
       queryParam: {},
       // 表头
       columns,
-      // 加载数据方法 必须为 Promise 对象
-      // loadData: parameter => {
-      //   return getRoleList(parameter)
-      //     .then(res => {
-      //       console.log('getRoleList', res)
-      //       // 展开全部行
-      //       this.expandedRowKeys = res.result.data.map(item => item.id)
-      //       return res.result
-      //     })
-      // },
       loadSingleData: (parameter) => {
-        return getUserById(parameter).then(res => {
-          return res.data
-        })
+        return getUserById(parameter)
+          .then(res => {
+            return res.data
+          })
       },
       loadData: (parameter) => {
-        return getUserPageList(parameter).then(res => {
-          // if (res.code === 0) {
-          //   this.expandedRowKeys = res.data.list.map(item => item.id)
-          // }
-          return res.data
-        })
+        const finalParameters = Object.assign(parameter, this.queryParam)
+        console.log(finalParameters)
+        return getUserPageList(finalParameters)
+          .then(res => {
+            console.log(res.data)
+            return res.data
+          })
       },
 
       expandedRowKeys: [],
@@ -474,7 +456,10 @@ export default {
   },
   filters: {
     statusFilter (key) {
-      return STATUS[key]
+      return statusMap[key].text
+    },
+    statusTypeFilter (type) {
+      return statusMap[type].status
     },
     permissionFilter (key) {
       const permission = PERMISSION_ENUM[key]
@@ -482,15 +467,65 @@ export default {
     }
   },
   methods: {
-    handleRoleSelected (role) {
-      this.$router.push({ name: 'RoleList', params: { ...role } })
+    doAdd (values) {
+      addUser({
+        username: values.userName,
+        nickname: values.nickName,
+        password: values.password
+      }).then(response => {
+        if (response.code === 0) {
+          this.$notification['success']({ message: '成功', description: '添加成功', duration: 4 })
+          this.$refs.table.refresh()
+        } else {
+          this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
+        }
+        this.addVisible = false
+      }).catch(err => {
+        this.$notification['error']({ message: '错误', description: err, duration: 4 })
+        this.addVisible = false
+      })
     },
-    handleSearch (searchState) {
-      this.$refs.table.loadData({ id: searchState.id })
+    doUpdate (values) {
+      updateUserInfo({
+        'avatar': values.avatar,
+        'id': values.id,
+        'nickName': values.nickName,
+        'status': values.status,
+        'userName': values.userName
+      }).then(response => {
+        if (response.code === 0) {
+          this.$notification['success']({ message: '成功', description: '修改成功', duration: 4 })
+          this.$refs.table.refresh()
+        } else {
+          this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
+        }
+        this.visible = false
+      }).catch(err => {
+        this.$notification['error']({ message: '错误', description: err, duration: 4 })
+        this.visible = false
+      })
     },
-    handleDelete (record) {
-      delateUser({
-        ids: [ record.id ]
+    doChangePassword (values) {
+      changePassword({
+        'newPassword': values.newPassword,
+        'password': values.oldPassword,
+        'username': values.userName
+      }).then(response => {
+        if (response.code === 0) {
+          this.$notification['success']({ message: '成功', description: '修改成功', duration: 4 })
+          this.$refs.table.refresh()
+        } else {
+          this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
+        }
+        this.pwdVisible = false
+      }).catch(err => {
+        this.$notification['error']({ message: '错误', description: err, duration: 4 })
+        this.pwdVisible = false
+      })
+    },
+    doDel (record) {
+      deleteUser({
+        ids: [record.id]
       }).then(response => {
         if (response.code === 0) {
           this.$notification['success']({ message: '成功', description: '删除成功', duration: 4 })
@@ -502,10 +537,45 @@ export default {
         this.$notification['error']({ message: '错误', description: err, duration: 4 })
       })
     },
-    handleChangePWD (record) {
+    handleRoleSelected (role) {
+      this.$router.push({ name: 'RoleList', params: { ...role } })
+    },
+    handleSearch (searchState) {
+      this.$refs.table.loadData({ id: searchState.id })
+    },
+    handleDelete (record) {
+      const that = this
+      Modal.confirm({
+        title: '确定要删除么？',
+        okText: '确定',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk () {
+          that.doDel(record)
+        },
+        onCancel () {
+        }
+      })
+    },
+    handleChangePassword (record) {
       this.pwdVisible = true
       this.$nextTick(() => {
         this.form.setFieldsValue(pick(record, ['id', 'newPassword', 'oldPassword', 'userName']))
+      })
+    },
+    handleChangeStatus (record) {
+      const that = this
+      Modal.confirm({
+        title: '确定要' + (record.status === 1 ? '禁用' : '启用') + '么？',
+        okText: '确定',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk () {
+          record.status = record.status === 1 ? 2 : 1
+          that.doUpdate(record)
+        },
+        onCancel () {
+        }
       })
     },
     handleEdit (record) {
@@ -520,58 +590,11 @@ export default {
       e.preventDefault()
       this.form.validateFields((err, values) => {
         if (type === 'add') {
-          addUser({
-              username: values.userName,
-              nickname: values.nickName,
-              password: values.password
-            }).then(response => {
-              if (response.code === 0) {
-                this.$notification['success']({ message: '成功', description: '添加成功', duration: 4 })
-                this.$refs.table.refresh()
-              } else {
-                this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
-              }
-              this.addVisible = false
-            }).catch(err => {
-              this.$notification['error']({ message: '错误', description: err, duration: 4 })
-              this.addVisible = false
-            })
+          this.doAdd(values)
         } else if (type === 'edit') {
-          updateUserInfo({
-              'avatar': values.avatar,
-              'id': values.id,
-              'nickName': values.nickName,
-              'status': values.status,
-              'userName': values.userName
-            }).then(response => {
-              if (response.code === 0) {
-                this.$notification['success']({ message: '成功', description: '修改成功', duration: 4 })
-                this.$refs.table.refresh()
-              } else {
-                this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
-              }
-              this.visible = false
-            }).catch(err => {
-              this.$notification['error']({ message: '错误', description: err, duration: 4 })
-              this.visible = false
-            })
+          this.doUpdate(values)
         } else if (type === 'pwd') {
-          changePassword({
-              'newPassword': values.newPassword,
-              'password': values.oldPassword,
-              'username': values.userName
-            }).then(response => {
-              if (response.code === 0) {
-                this.$notification['success']({ message: '成功', description: '修改成功', duration: 4 })
-                this.$refs.table.refresh()
-              } else {
-                this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
-              }
-              this.pwdVisible = false
-            }).catch(err => {
-              this.$notification['error']({ message: '错误', description: err, duration: 4 })
-              this.pwdVisible = false
-            })
+          this.doChangePassword(values)
         }
         console.log(err, values)
       })
@@ -585,7 +608,7 @@ export default {
     },
     handlePasswordLevel (rule, value, callback) {
       if (!value) {
-       return callback()
+        return callback()
       }
       console.log('scorePassword ; ', scorePassword(value))
       if (value.length >= 6) {
@@ -593,10 +616,10 @@ export default {
           this.state.level = 1
         }
         if (scorePassword(value) >= 60) {
-        this.state.level = 2
+          this.state.level = 2
         }
         if (scorePassword(value) >= 80) {
-        this.state.level = 3
+          this.state.level = 3
         }
       } else {
         this.state.level = 0
@@ -631,43 +654,11 @@ export default {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
     },
-    handleExpand (expanded, record) {
-      console.log('expanded', expanded, record)
-      if (!record.roles) {
-        this.loading = true
-        getUserRoleListById({ id: record.id }).then(res => {
-          if (res.code === 0) {
-            return getRoleByIds({ ids: res.data })
-          } else {
-            this.$notification['error']({ message: '错误', description: '获取角色失败', duration: 4 })
-          }
-        }).then(res => {
-          if (res.code === 0) {
-            record.roles = res.data
-            this.expand(expanded, record)
-          } else {
-            this.$notification['error']({ message: '错误', description: '获取角色失败', duration: 4 })
-          }
-        }).finally(() => {
-            this.loading = false
-        })
-      } else {
-        this.expand(expanded, record)
-      }
-    },
-    expand (expanded, record) {
-      if (expanded) {
-        this.expandedRowKeys.push(record.id)
-      } else {
-        this.expandedRowKeys = this.expandedRowKeys.filter(item => record.id !== item)
-      }
-    },
     toggleAdvanced () {
       this.advanced = !this.advanced
     }
   },
-  watch: {
-  }
+  watch: {}
 }
 </script>
 

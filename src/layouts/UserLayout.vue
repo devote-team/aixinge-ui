@@ -10,7 +10,7 @@
           <div class="header">
             <a href="/">
               <img src="~@/assets/logo.svg" class="logo" alt="logo">
-              <span class="title">AiXinGe爱信鸽</span>
+              <span class="title">AiXinGe ♥ 爱信鸽</span>
             </a>
           </div>
           <div class="desc">
@@ -27,7 +27,7 @@
             <a href="_self">条款</a>
           </div>
           <div class="copyright">
-            Copyright &copy; 2022 AiXinGe
+            Copyright &copy; 2022 <a href="https://aixinge.com/" target="_blank">AiXinGe</a>
           </div>
         </div>
       </div>
@@ -54,7 +54,7 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang='less' scoped>
 #userLayout.user-layout-wrapper {
   height: 100%;
 
@@ -129,6 +129,7 @@ export default {
             top: 2px;
           }
         }
+
         .desc {
           font-size: 12px;
           color: rgba(0, 0, 0, 0.45);
@@ -157,14 +158,17 @@ export default {
         .links {
           margin-bottom: 8px;
           font-size: 14px;
+
           a {
             color: rgba(0, 0, 0, 0.45);
             transition: all 0.3s;
+
             &:not(:last-child) {
               margin-right: 40px;
             }
           }
         }
+
         .copyright {
           color: rgba(0, 0, 0, 0.45);
           font-size: 14px;

@@ -9,7 +9,7 @@
           <div class="content-title">
             {{ timeFix }}，{{ user.nickName }}<span class="welcome-text">，{{ welcome }}</span>
           </div>
-          <div>AiXinGe(爱信鸽)平台</div>
+          <div>AiXinGe ♥ 爱信鸽</div>
         </div>
       </div>
     </template>
