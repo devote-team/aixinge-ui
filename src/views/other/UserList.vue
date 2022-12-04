@@ -1,6 +1,7 @@
 <template>
   <page-header-wrapper>
     <a-card :bordered="false">
+      <!-- 查询栏 -->
       <div class="table-page-search-wrapper">
         <a-form
           layout="inline">
@@ -12,7 +13,7 @@
             </a-col>
             <a-col :md="8" :sm="24">
               <a-form-item label="状态">
-                <a-select placeholder="请选择" default-value="0">
+                <a-select v-model="queryParam.status" placeholder="请选择" default-value="0" allow-clear="true">
                   <a-select-option value="0">全部</a-select-option>
                   <a-select-option value="1">启用</a-select-option>
                   <a-select-option value="2">禁用</a-select-option>
@@ -24,7 +25,7 @@
                 <a-button
                   type="primary"
                   html-type="submit"
-                  @click.stop.prevent="handleSearch(searchState)"
+                  @click.stop.prevent="handleSearch()"
                 >查询</a-button>
                 <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
               </span>
@@ -33,10 +34,12 @@
         </a-form>
       </div>
 
+      <!-- 操作栏 -->
       <div class="table-operator">
         <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button>
       </div>
 
+      <!-- 用户列表 -->
       <s-table
         size="default"
         ref="table"
@@ -92,7 +95,7 @@
           >
             <a-input
               placeholder="起一个名字"
-              v-decorator="['nickName', {rules: [{ required: true, message: $t('user.nickname.required') }], validateTrigger: ['change', 'blur']}]"
+              v-decorator="['nickname', {rules: [{ required: true, message: $t('user.nickname.required') }], validateTrigger: ['change', 'blur']}]"
             />
           </a-form-item>
 
@@ -104,7 +107,7 @@
           >
             <a-input
               placeholder="用户名"
-              v-decorator="['userName', {rules: [{ required: true, message: $t('user.userName.required') }], validateTrigger: ['change', 'blur']}]"
+              v-decorator="['username', {rules: [{ required: true, message: $t('user.username.required') }], validateTrigger: ['change', 'blur']}]"
             />
           </a-form-item>
 
@@ -147,6 +150,7 @@
 
         </a-form>
       </a-modal>
+
       <!-- 编辑用户 -->
       <a-modal
         title="操作"
@@ -193,7 +197,7 @@
           >
             <a-input
               placeholder="用户名"
-              v-decorator="['userName']"
+              v-decorator="['username']"
             />
           </a-form-item>
 
@@ -206,7 +210,7 @@
           >
             <a-input
               placeholder="昵称"
-              v-decorator="['nickName']"
+              v-decorator="['nickname']"
             />
           </a-form-item>
 
@@ -224,6 +228,7 @@
 
         </a-form>
       </a-modal>
+
       <!-- 更改密码 -->
       <a-modal
         title="更改密码"
@@ -259,7 +264,7 @@
             <a-input
               placeholder="用户名"
               disabled="disabled"
-              v-decorator="['userName']"
+              v-decorator="['username']"
             />
           </a-form-item>
 
@@ -290,10 +295,20 @@
         </a-form>
       </a-modal>
 
+      <!-- 角色配置 -->
+      <a-modal
+        title="角色配置"
+        style="top: 20px;"
+        :width="800"
+        v-model="roleVisible"
+        @ok="handleOk($event,'role')"
+      >
+      </a-modal>
     </a-card>
   </page-header-wrapper>
 </template>
 
+<!--suppress JSUnresolvedVariable -->
 <script>
 import pick from 'lodash.pick'
 import { STable } from '@/components'
@@ -325,11 +340,11 @@ const statusMap = {
 const columns = [
   {
     title: '用户名',
-    dataIndex: 'userName'
+    dataIndex: 'username'
   },
   {
     title: '昵称',
-    dataIndex: 'nickName'
+    dataIndex: 'nickname'
   },
   {
     title: '状态',
@@ -398,13 +413,10 @@ export default {
       visible: false,
       addVisible: false,
       pwdVisible: false,
+      roleVisible: false,
 
       loading: false,
-
-      alert: {
-        show: true,
-        clear: true
-      },
+      alert: true,
 
       state: {
         time: 60,
@@ -469,8 +481,8 @@ export default {
   methods: {
     doAdd (values) {
       addUser({
-        username: values.userName,
-        nickname: values.nickName,
+        username: values.username,
+        nickname: values.nickname,
         password: values.password
       }).then(response => {
         if (response.code === 0) {
@@ -489,9 +501,9 @@ export default {
       updateUserInfo({
         'avatar': values.avatar,
         'id': values.id,
-        'nickName': values.nickName,
+        'nickname': values.nickname,
         'status': values.status,
-        'userName': values.userName
+        'username': values.username
       }).then(response => {
         if (response.code === 0) {
           this.$notification['success']({ message: '成功', description: '修改成功', duration: 4 })
@@ -509,7 +521,7 @@ export default {
       changePassword({
         'newPassword': values.newPassword,
         'password': values.oldPassword,
-        'username': values.userName
+        'username': values.username
       }).then(response => {
         if (response.code === 0) {
           this.$notification['success']({ message: '成功', description: '修改成功', duration: 4 })
@@ -559,7 +571,7 @@ export default {
     handleChangePassword (record) {
       this.pwdVisible = true
       this.$nextTick(() => {
-        this.form.setFieldsValue(pick(record, ['id', 'newPassword', 'oldPassword', 'userName']))
+        this.form.setFieldsValue(pick(record, ['id', 'newPassword', 'oldPassword', 'username']))
       })
     },
     handleChangeStatus (record) {
@@ -582,27 +594,29 @@ export default {
       console.log('record', record)
 
       this.$nextTick(() => {
-        this.form.setFieldsValue(pick(record, ['id', 'status', 'avatar', 'userName', 'nickName']))
+        this.form.setFieldsValue(pick(record, ['id', 'status', 'avatar', 'username', 'nickname']))
       })
     },
     handleOk (e, type) {
       e.preventDefault()
       this.form.validateFields((err, values) => {
+        console.log(err, values)
+
         if (type === 'add') {
           this.doAdd(values)
         } else if (type === 'edit') {
           this.doUpdate(values)
         } else if (type === 'pwd') {
           this.doChangePassword(values)
+        } else if (type === 'role') {
         }
-        console.log(err, values)
       })
     },
     handleAdd (record) {
       this.addVisible = true
       console.log('record', record)
       this.$nextTick(() => {
-        this.form.setFieldsValue(pick(record, ['id', 'status', 'password', 'userName', 'nickName']))
+        this.form.setFieldsValue(pick(record, ['id', 'status', 'password', 'username', 'nickname']))
       })
     },
     handlePasswordLevel (rule, value, callback) {
