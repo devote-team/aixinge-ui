@@ -537,11 +537,10 @@ export default {
         this.$notification['error']({ message: '错误', description: err, duration: 4 })
       })
     },
-    handleRoleSelected (role) {
-      this.$router.push({ name: 'RoleList', params: { ...role } })
+    handleRoleSelected (record) {
     },
-    handleSearch (searchState) {
-      this.$refs.table.loadData({ id: searchState.id })
+    handleSearch () {
+      this.$refs.table.refresh()
     },
     handleDelete (record) {
       const that = this
