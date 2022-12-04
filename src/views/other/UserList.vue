@@ -13,7 +13,7 @@
             </a-col>
             <a-col :md="8" :sm="24">
               <a-form-item label="状态">
-                <a-select v-model="queryParam.status" placeholder="请选择" default-value="0" allow-clear="true">
+                <a-select v-model="queryParam.status" placeholder="请选择" default-value="0">
                   <a-select-option value="0">全部</a-select-option>
                   <a-select-option value="1">启用</a-select-option>
                   <a-select-option value="2">禁用</a-select-option>
@@ -68,7 +68,7 @@
             <a-divider type="vertical" />
             <a @click="handleChangePassword(record)">修改密码</a>
             <a-divider type="vertical" />
-            <a @click="handleChangeRole(record)">角色配置</a>
+            <a @click="handleAssignRole(record)">角色配置</a>
             <a-divider type="vertical" />
             <a @click="handleChangeStatus(record)">{{ record.status === 1 ? '禁用' : '启用' }}</a>
             <a-divider type="vertical" />
@@ -86,6 +86,20 @@
         @ok="handleOk($event, 'add')"
       >
         <a-form class="permission-form" :form="form">
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="ID"
+            hasFeedback
+            validateStatus="success"
+            hidden="hidden"
+          >
+            <a-input
+              placeholder="ID"
+              disabled="disabled"
+              v-decorator="['id']"
+            />
+          </a-form-item>
 
           <a-form-item
             :labelCol="labelCol"
@@ -160,16 +174,16 @@
         @ok="handleOk($event,'edit')"
       >
         <a-form class="permission-form" :form="form">
-
           <a-form-item
             :labelCol="labelCol"
             :wrapperCol="wrapperCol"
-            label="唯一识别码"
+            label="ID"
             hasFeedback
             validateStatus="success"
+            hidden="hidden"
           >
             <a-input
-              placeholder="唯一识别码"
+              placeholder="ID"
               disabled="disabled"
               v-decorator="['id']"
             />
@@ -225,7 +239,6 @@
               <a-select-option :value="2">禁用</a-select-option>
             </a-select>
           </a-form-item>
-
         </a-form>
       </a-modal>
 
@@ -303,6 +316,46 @@
         v-model="roleVisible"
         @ok="handleOk($event,'role')"
       >
+        <a-form class="permission-form" :form="form">
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="ID"
+            hidden="hidden"
+          >
+            <a-input
+              placeholder="ID"
+              disabled="disabled"
+              v-decorator="['id']"
+            />
+          </a-form-item>
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="当前用户"
+          >
+            <a-input
+              :disabled="true"
+              placeholder="用户名"
+              v-decorator="['username']"
+            />
+          </a-form-item>
+          <a-form-item
+            :labelCol="labelCol"
+            :wrapperCol="wrapperCol"
+            label="角色配置"
+          >
+            <a-transfer
+              ref="transfer"
+              :row-key="item => item.id"
+              :target-keys="selectedRoles"
+              :data-source="allRoles"
+              :titles="['角色列表', '已有角色']"
+              :render="item => item.name"
+              @change="handleRoleChange"
+            />
+          </a-form-item>
+        </a-form>
       </a-modal>
     </a-card>
   </page-header-wrapper>
@@ -311,20 +364,19 @@
 <!--suppress JSUnresolvedVariable -->
 <script>
 import pick from 'lodash.pick'
-import { STable } from '@/components'
 import {
   getUserPageList,
   addUser,
   deleteUser,
   getUserById,
   changePassword,
-  updateUserInfo
-  // getUserRoleListById
+  updateUserInfo,
+  getUserRoleListById,
+  assignRole
 } from '@/api/base'
-// import { getRolePageList, getRoleById, deleteRole } from '@/api/role'
+import { getRoleList } from '@/api/role'
 import { PERMISSION_ENUM } from '@/core/permission/permission'
 import { scorePassword } from '@/utils/util'
-import { Modal } from 'ant-design-vue'
 
 const statusMap = {
   1: {
@@ -385,10 +437,6 @@ const levelColor = {
 
 export default {
   name: 'TableList',
-  components: {
-    STable
-    // QuestionCircleOutlined
-  },
   computed: {
     passwordLevelClass () {
       return levelClass[this.state.passwordLevel]
@@ -463,7 +511,10 @@ export default {
 
       expandedRowKeys: [],
       selectedRowKeys: [],
-      selectedRows: []
+      selectedRows: [],
+
+      selectedRoles: [],
+      allRoles: []
     }
   },
   filters: {
@@ -549,14 +600,57 @@ export default {
         this.$notification['error']({ message: '错误', description: err, duration: 4 })
       })
     },
-    handleRoleSelected (record) {
+    doAssignRole (record) {
+      assignRole({
+        id: record.id,
+        roleIds: this.selectedRoles
+      }).then(response => {
+        if (response.code === 0) {
+          this.$notification['success']({ message: '成功', description: '修改成功', duration: 4 })
+          this.$refs.table.refresh()
+        } else {
+          this.$notification['error']({ message: '错误', description: response.msg, duration: 4 })
+        }
+      }).catch(err => {
+        this.$notification['error']({ message: '错误', description: err, duration: 4 })
+      })
+    },
+    handleAssignRole (record) {
+      this.selectedRoles = []
+      this.roleVisible = true
+      this.$nextTick(() => {
+        this.form.setFieldsValue(pick(record, ['id', 'username']))
+      })
+
+      getRoleList()
+        .then(response => {
+          if (response.code === 0) {
+            this.allRoles = response.data
+          }
+
+          getUserRoleListById({
+            id: record.id
+          }).then(response => {
+            if (response.code === 0) {
+              this.selectedRoles = response.data
+            }
+          }).catch(() => {
+            this.roleVisible = false
+          })
+        })
+        .catch(() => {
+          this.roleVisible = false
+        })
+    },
+    handleRoleChange (targetKeys, direction, moveKeys) {
+      this.selectedRoles = targetKeys
     },
     handleSearch () {
       this.$refs.table.refresh()
     },
     handleDelete (record) {
       const that = this
-      Modal.confirm({
+      this.$model.confirm({
         title: '确定要删除么？',
         okText: '确定',
         okType: 'danger',
@@ -576,7 +670,7 @@ export default {
     },
     handleChangeStatus (record) {
       const that = this
-      Modal.confirm({
+      this.$model.confirm({
         title: '确定要' + (record.status === 1 ? '禁用' : '启用') + '么？',
         okText: '确定',
         okType: 'danger',
@@ -609,6 +703,7 @@ export default {
         } else if (type === 'pwd') {
           this.doChangePassword(values)
         } else if (type === 'role') {
+          this.doAssignRole(values)
         }
       })
     },

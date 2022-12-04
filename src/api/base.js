@@ -86,14 +86,6 @@ export function assignRole (parameter) {
   })
 }
 
-export function AssignRole (parameter) {
-  return request({
-    url: userApi.twoStepCode,
-    method: 'post',
-    data: parameter
-  })
-}
-
 export function getUserById (parameter) {
   return request({
     url: userApi.GetUserById,
