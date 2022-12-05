@@ -364,30 +364,20 @@
 <!--suppress JSUnresolvedVariable -->
 <script>
 import pick from 'lodash.pick'
+import { PERMISSION_ENUM } from '@/core/permission/permission'
 import {
-  getUserPageList,
   addUser,
+  assignRole,
+  changePassword,
   deleteUser,
   getUserById,
-  changePassword,
-  updateUserInfo,
+  getUserPageList,
   getUserRoleListById,
-  assignRole
+  updateUserInfo
 } from '@/api/base'
 import { getRoleList } from '@/api/role'
-import { PERMISSION_ENUM } from '@/core/permission/permission'
 import { scorePassword } from '@/utils/util'
-
-const statusMap = {
-  1: {
-    status: 'success',
-    text: '启用'
-  },
-  2: {
-    status: 'error',
-    text: '禁用'
-  }
-}
+import { labelCol, statusMap, wrapperCol } from '@/utils/constant'
 
 const columns = [
   {
@@ -408,7 +398,8 @@ const columns = [
     dataIndex: 'createdAt',
     scopedSlots: { customRender: 'createTime' },
     sorter: true
-  }, {
+  },
+  {
     title: '操作',
     width: '350px',
     dataIndex: 'action',
@@ -476,14 +467,8 @@ export default {
         progressColor: '#FF0000'
       },
 
-      labelCol: {
-        xs: { span: 24 },
-        sm: { span: 5 }
-      },
-      wrapperCol: {
-        xs: { span: 24 },
-        sm: { span: 16 }
-      },
+      labelCol: labelCol,
+      wrapperCol: wrapperCol,
       form: this.$form.createForm(this),
       permissions: [],
 

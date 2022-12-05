@@ -1,6 +1,11 @@
 <template>
   <page-header-wrapper>
     <a-card :bordered="false">
+      <!-- 查询栏 -->
+      <div class="table-page-search-wrapper">
+      </div>
+
+      <!-- 操作栏 -->
       <div class="table-operator">
         <a-button
           type="primary"
@@ -10,16 +15,17 @@
         </a-button>
       </div>
 
-      <s-table :columns="columns" :data="loadData" :single-data="loadSingleData">
-
-        <span slot="actions" slot-scope="text, record">
-          <a-tag v-for="(action, index) in record.actionList" :key="index">{{ action.describe }}</a-tag>
-        </span>
-
+      <!-- 用户列表 -->
+      <s-table
+        :columns="columns"
+        :data="loadData"
+        :single-data="loadSingleData"
+        :scroll="{ x: true }"
+        :indent-size="5">
         <span slot="status" slot-scope="text">
-          {{ text | statusFilter }}
+          <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
         </span>
-
+        <span slot="createTime" slot-scope="text">{{ text | moment }}</span>
         <span slot="action" slot-scope="text, record">
           <a @click="handleEdit(record)">编辑</a>
           <a-divider type="vertical" />
@@ -120,14 +126,12 @@
 </template>
 
 <script>
-import { STable } from '@/components'
 import { mapState } from 'vuex'
+import { labelCol, statusMap, wrapperCol } from '@/utils/constant'
+import { getMenuById, getMenuListTree } from '@/api/menu'
 
 export default {
   name: 'TableList',
-  components: {
-    STable
-  },
   computed: {
     ...mapState({
       menustree: state => state.user.menustree
@@ -138,14 +142,9 @@ export default {
       description: '列表使用场景：后台管理中的权限管理以及角色管理，可用于基于 RBAC 设计的角色权限控制，颗粒度细到每一个操作类型。',
 
       visible: false,
-      labelCol: {
-        xs: { span: 24 },
-        sm: { span: 5 }
-      },
-      wrapperCol: {
-        xs: { span: 24 },
-        sm: { span: 16 }
-      },
+
+      labelCol: labelCol,
+      wrapperCol: wrapperCol,
       form: null,
       mdl: {},
 
@@ -156,26 +155,62 @@ export default {
       // 表头
       columns: [
         {
-          title: '唯一识别码',
-          dataIndex: 'id'
+          title: '菜单标题',
+          width: 250,
+          fixed: 'left',
+          dataIndex: 'meta.title',
+          customRender: (text) => {
+            return this.$t(text)
+          }
         },
         {
-          title: '权限名称',
-          dataIndex: 'label'
+          title: '序号',
+          width: 60,
+          dataIndex: 'sort'
         },
-        // {
-        //   title: '可操作权限',
-        //   dataIndex: 'actions',
-        //   scopedSlots: { customRender: 'actions' }
-        // },
+        {
+          title: '是否隐藏',
+          width: 100,
+          dataIndex: 'hidden',
+          customRender: (text) => {
+            return text === '1' ? '是' : '否'
+          }
+        },
         {
           title: '状态',
+          width: 100,
           dataIndex: 'status',
           scopedSlots: { customRender: 'status' }
         },
         {
+          title: '路由名称',
+          width: 200,
+          dataIndex: 'name'
+        },
+        {
+          title: '路由地址',
+          width: 300,
+          dataIndex: 'path'
+        },
+        {
+          title: '重定向地址',
+          width: 300,
+          dataIndex: 'redirect'
+        },
+        {
+          title: '资源路径',
+          width: 300,
+          dataIndex: 'component'
+        },
+        {
+          title: '创建时间',
+          dataIndex: 'createdAt',
+          scopedSlots: { customRender: 'createTime' }
+        },
+        {
           title: '操作',
-          width: '150px',
+          width: 300,
+          fixed: 'right',
           dataIndex: 'action',
           scopedSlots: { customRender: 'action' }
         }
@@ -184,32 +219,17 @@ export default {
       localMenustree: null,
       // 加载数据方法 必须为 Promise 对象
       loadSingleData: (parameter) => {
-        return new Promise((resolve, reject) => {
-          if (this.localMenustree) {
-            resolve(this.localMenustree)
-          } else {
-            this.$store.dispatch('GetMenuListTree').then((res) => {
-              this.loadMenus()
-              resolve(this.localMenustree)
-            }).catch(err => {
-              reject(err)
-            })
-          }
-        })
+        return getMenuById(parameter)
+          .then(res => {
+            return res.data
+          })
       },
       loadData: parameter => {
-        return new Promise((resolve, reject) => {
-          if (this.localMenustree) {
-            resolve(this.localMenustree)
-          } else {
-            this.$store.dispatch('GetMenuListTree').then((res) => {
-              this.loadMenus()
-              resolve(this.localMenustree)
-            }).catch(err => {
-              reject(err)
-            })
-          }
-        })
+        const finalParameters = Object.assign(parameter, this.queryParam)
+        return getMenuListTree(finalParameters)
+          .then(res => {
+            return res.data
+          })
       },
 
       selectedRowKeys: [],
@@ -217,12 +237,11 @@ export default {
     }
   },
   filters: {
-    statusFilter (status) {
-      const statusMap = {
-        1: '正常',
-        2: '禁用'
-      }
-      return statusMap[status]
+    statusFilter (key) {
+      return statusMap[key].text
+    },
+    statusTypeFilter (type) {
+      return statusMap[type].status
     }
   },
   created () {
