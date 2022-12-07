@@ -3,6 +3,35 @@
     <a-card :bordered="false">
       <!-- 查询栏 -->
       <div class="table-page-search-wrapper">
+        <a-form
+          layout="inline">
+          <a-row :gutter="48">
+            <a-col :md="8" :sm="24">
+              <a-form-item label="菜单名称" name="id" :rules="[{ required: true, message: '请输入菜单名称' }]">
+                <a-input v-model="queryParam.title" placeholder="请输入" />
+              </a-form-item>
+            </a-col>
+            <a-col :md="8" :sm="24">
+              <a-form-item label="状态">
+                <a-select v-model="queryParam.status" placeholder="请选择" default-value="0">
+                  <a-select-option value="0">全部</a-select-option>
+                  <a-select-option value="1">启用</a-select-option>
+                  <a-select-option value="2">禁用</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :md="8" :sm="24">
+              <span class="table-page-search-submitButtons">
+                <a-button
+                  type="primary"
+                  html-type="submit"
+                  @click.stop.prevent="handleSearch()"
+                >查询</a-button>
+                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
+              </span>
+            </a-col>
+          </a-row>
+        </a-form>
       </div>
 
       <!-- 操作栏 -->
@@ -17,6 +46,9 @@
 
       <!-- 用户列表 -->
       <s-table
+        size="default"
+        ref="table"
+        row-key="id"
         :columns="columns"
         :data="loadData"
         :single-data="loadSingleData"
@@ -27,24 +59,13 @@
         </span>
         <span slot="createTime" slot-scope="text">{{ text | moment }}</span>
         <span slot="action" slot-scope="text, record">
-          <a @click="handleEdit(record)">编辑</a>
-          <a-divider type="vertical" />
-          <a-dropdown>
-            <a class="ant-dropdown-link">
-              更多 <a-icon type="down" />
-            </a>
-            <a-menu slot="overlay">
-              <a-menu-item>
-                <a href="javascript:;">详情</a>
-              </a-menu-item>
-              <a-menu-item>
-                <a href="javascript:;">禁用</a>
-              </a-menu-item>
-              <a-menu-item>
-                <a href="javascript:;">删除</a>
-              </a-menu-item>
-            </a-menu>
-          </a-dropdown>
+          <template>
+            <a @click="handleEdit(record)">编辑</a>
+            <a-divider type="vertical" />
+            <a @click="handleChangeStatus(record)">{{ record.status === 1 ? '禁用' : '启用' }}</a>
+            <a-divider type="vertical" />
+            <a @click="handleDelete(record)">删除</a>
+          </template>
         </span>
       </s-table>
 
@@ -209,7 +230,7 @@ export default {
         },
         {
           title: '操作',
-          width: 300,
+          width: 200,
           fixed: 'right',
           dataIndex: 'action',
           scopedSlots: { customRender: 'action' }
@@ -273,6 +294,9 @@ export default {
         })
         return menu
       }).sort((a, b) => a.id - b.id)
+    },
+    handleSearch () {
+      this.$refs.table.refresh()
     },
     handleEdit (record) {
       this.mdl = Object.assign({}, record)
